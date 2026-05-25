@@ -1,98 +1,170 @@
-# MARS — Adversarial Review System
+# MARS
 
-A bounded adversarial review system for ambitious cognitive work. Not "multi-agent AI" — a
-structured protocol that assigns frontier models to defined adversarial roles to surface
-assumptions, contested risks, and decision pressure **before** commitment.
+MARS runs a structured adversarial review over a decision before you commit to it. One model writes a grounded proposal, a second model from a different provider attacks it, and a third compresses the fight into a single concrete decision.
 
-**The problem it solves:** single-model reasoning stabilizes around plausible narratives too
-quickly. One model produces coherent, internally consistent thinking while under-attacking its
-own assumptions. MARS forces cross-model adversarial pressure and a concrete decision.
+It exists because one model stabilizes on a plausible answer too fast. It produces something coherent and internally consistent, then under-attacks its own assumptions. MARS forces cross-model pressure: the attacker cannot share a provider with the proposer, so you do not get the same blind spots twice.
 
-## What it is
-
-- A CLI that runs a primary → adversarial → orchestrator review over a **structured artifact**.
-- Multi-provider (Anthropic, OpenAI, Gemini) with per-role model assignment.
-- Bounded: hard cap of 4 rounds, repetition-triggered early termination.
-- Every critique gets a disposition; every run forces one concrete decision.
-
-## What it is NOT
-
-- A general-purpose chatbot or Q&A tool.
-- Code review or bug fixing.
-- Answer synthesis, consensus building, or infinite debate.
-
-Use it for: product direction, architecture decisions, AI/workflow strategy, high-ambiguity or
-irreversible decisions. Do **not** use it for bug fixes, routine implementation, or simple
-deterministic tasks.
-
-## The three roles
-
-- **Primary** — generates a coherent, grounded proposal: framing, recommendation, tradeoffs,
-  assumptions, uncertainty. Does not defend itself.
-- **Adversarial reviewer** — attacks assumptions and framing. Every critique must be falsifiable
-  and state what would resolve it. Assign your strongest model here — it is load-bearing.
-- **Orchestrator** — compresses critiques across rounds, assigns dispositions, detects repetition,
-  and forces a final decision. Its last-round output **is** the final synthesis.
-
-## Quickstart
+Use it for product direction, architecture calls, AI and workflow strategy, and high-stakes or hard-to-reverse decisions. Do not use it for bug fixes, routine implementation, or simple questions.
 
 ```bash
-# 1. Install (Python 3.11+)
-pip install -e .
-
-# 2. Set keys for the providers you'll use
-export ANTHROPIC_API_KEY=...
-export OPENAI_API_KEY=...
-export GEMINI_API_KEY=...
-
-# 3. Configure models + role mapping
-cp config.example.yaml config.yaml   # edit as needed
-
-# 4. Dry run first — validates config + artifact, estimates cost, makes ZERO API calls
+pip install -e .             # Python 3.11+
+cp config.example.yaml config.yaml
 mars run --artifact examples/prd-example.yaml --config config.yaml --dry-run
-
-# 5. Real run
-mars run --artifact examples/prd-example.yaml --config config.yaml --rounds 2
 ```
 
-## CLI
+---
+
+## How it works
+
+1. **You write a structured artifact.** A YAML file with the decision, the proposal, your constraints, assumptions, fears, and tradeoffs. Vague prompts are rejected with a field-level error. This is the input that makes the review sharp instead of generic.
+2. **You dry run first.** `--dry-run` validates the config and artifact, prints a cost estimate, and makes zero API calls. Nothing hits a provider until you confirm.
+3. **The primary model proposes.** It restates the decision, recommends a direction, and names its own tradeoffs, assumptions, and points of low confidence. It does not defend itself.
+4. **The adversarial model attacks.** A model from a different provider tears into the proposal. Every critique has to be falsifiable and state what would resolve it. It also names the missing problem, the unstated assumption, the absent stakeholder, and the most dangerous certainty.
+5. **The orchestrator forces a decision.** It compresses the critiques, assigns a disposition to each, detects when a round just repeats the last one, and ends with one concrete action plus the objection you are most likely to ignore.
+
+---
+
+## Commands
 
 ```bash
 mars run --artifact artifact.yaml --config config.yaml   # run a review
-mars run --artifact artifact.yaml --dry-run              # validate + estimate cost only
-mars run --artifact artifact.yaml --rounds 3             # override rounds (1-4)
-mars run --artifact artifact.yaml --yes                  # skip cost confirmation
+mars run --artifact artifact.yaml --dry-run              # validate and estimate cost, no API calls
+mars run --artifact artifact.yaml --rounds 3             # override rounds (1 to 4)
+mars run --artifact artifact.yaml --yes                  # skip the cost confirmation prompt
 mars session list                                        # list past sessions
 mars session show <session-id>                           # re-render a past session
 ```
 
-Sessions are logged as human-readable JSON to `~/.mars/sessions/`.
+Sessions are written as readable JSON to `~/.mars/sessions/`.
+
+---
 
 ## Configuration
 
-See `config.example.yaml`. Rules enforced in code:
+Configure one model per provider, then map the three roles to them. See `config.example.yaml`.
 
-- At least **2 providers** configured.
-- Every role maps to a configured provider.
-- **`primary` and `adversarial` must be different providers** — same provider gives correlated
-  blind spots and defeats the purpose of adversarial review.
-- `orchestrator` may share a provider with `primary` (recommended default).
-- Rounds: 1–4. The cap of 4 is enforced in code; config cannot exceed it.
+```yaml
+providers:
+  anthropic:
+    model: claude-opus-4-7
+  openai:
+    model: gpt-4o
+roles:
+  primary: anthropic
+  adversarial: openai
+  orchestrator: anthropic
+rounds:
+  default: 2
+  max: 4
+```
 
-## Required artifact fields
+Rules enforced in code, not just in the schema:
 
-All mandatory (vague prompts are rejected with a field-level error):
+| Rule | Why |
+|------|-----|
+| At least 2 providers configured | The whole point is more than one model |
+| Every role maps to a configured provider | No role can point at a provider you never set up |
+| `primary` and `adversarial` must be different providers | Same provider gives correlated blind spots and kills the review |
+| `orchestrator` may share with `primary` | Recommended default, saves a key |
+| Rounds capped at 4 | Hard limit in code, config cannot raise it |
 
-`goal`, `artifact`, `constraints`, `assumptions`, `fears`, `tradeoffs`, `context`.
+---
+
+## Artifact fields
+
+All required. Missing or blank fields fail before any API call.
+
+| Field | What goes here |
+|-------|----------------|
+| `goal` | The decision being made or the thing under review |
+| `artifact` | The proposal, PRD, design, or plan itself |
+| `constraints` | Hard limits and non-negotiables |
+| `assumptions` | What you currently believe to be true |
+| `fears` | Where you think the risk is |
+| `tradeoffs` | What you have already weighed |
+| `context` | Who uses this and what system it lives in |
 
 Optional but recommended: `stakeholders`, `decision`. See `examples/` for three complete artifacts.
 
-## Final decision
+---
 
-Every run forces exactly one: `PROCEED`, `PROCEED_WITH_CONDITION`, `TEST_FIRST`, `ESCALATE`,
-`DEFER`, or `DISCARD` — each with required specifics. The synthesis also always includes the
-strongest objection most likely to be ignored, and the operator's most likely bias direction.
+## The three roles
+
+- **Primary.** Writes the grounded proposal. Practical and concise. Does not pre-defend.
+- **Adversarial.** Attacks the proposal and the artifact. Falsifiable critiques only, no contrarian noise. Put your strongest model here, it does the heavy lifting.
+- **Orchestrator.** Compresses critiques across rounds, tracks dispositions, detects repetition, and forces the final call. Its last round is the final synthesis, there is no separate summary pass.
+
+Each critique gets one disposition: `resolved`, `refuted`, `acceptable_risk`, `unresolved`, `decision_blocker`, or `requires_evidence`.
+
+---
+
+## The final decision
+
+Every run ends with exactly one action, each with required specifics:
+
+| Action | Comes with |
+|--------|------------|
+| `PROCEED` | What test or validation confirms it |
+| `PROCEED_WITH_CONDITION` | The condition that must hold |
+| `TEST_FIRST` | What to test and how |
+| `ESCALATE` | To whom, on what question |
+| `DEFER` | Until what is true |
+| `DISCARD` | Why |
+
+The synthesis also always reports the strongest objection you are most likely to dismiss, and the direction your bias is probably pulling you.
+
+---
+
+## Sample output
+
+```text
+============ MARS review : session 20260525T105351Z ============
+Primary
+  Recommendation: Build the CLI first, web app later.
+
+Round 1 : adversarial
+  major   "CLI assumes a technical user"   resolve: survey target users
+  Missing problem: distribution
+  Absent stakeholder: non-technical users
+  Most dangerous certainty: "a CLI is enough to share"
+
+FINAL SYNTHESIS
+  ► TEST_FIRST
+  Ship the CLI to 5 target users before building the web app.
+
+  Strongest ignored objection: nobody installs CLIs
+  Most likely operator bias: wants to build, not validate
+
+Completed all 1 planned round(s).
+```
+
+---
+
+## Cost and rounds
+
+- Cost is estimated before every run from litellm's price map and a per-role output budget. The estimate prints first and you confirm before any calls, unless you pass `--yes`.
+- Rounds default to 2 and cap at 4. If a round mostly repeats the previous one, the orchestrator flags it and the run stops early with a logged reason.
+
+---
+
+## Out of scope
+
+- General chat or question answering
+- Code review or bug fixing
+- Consensus building, answer averaging, or roleplay
+- Real-time multi-user collaboration
+- Deterministic task automation
+
+---
+
+## Security
+
+- No keys in code. Providers read their keys from environment variables (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`).
+- `.env`, session logs, and credential files are gitignored. Only `.env.example` is tracked.
+- Session logs are written locally to `~/.mars/sessions/` and never sent anywhere.
+
+---
 
 ## License
 
-MIT — see `LICENSE`.
+MIT. See `LICENSE`.
