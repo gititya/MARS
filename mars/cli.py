@@ -11,11 +11,11 @@ from mars.models import estimate_cost
 from mars.output import render_session, render_session_list
 from mars.roles.adversarial import SYSTEM as ADVERSARIAL_SYSTEM
 from mars.roles.orchestrator import SYSTEM as ORCHESTRATOR_SYSTEM
-from mars.roles.primary import SYSTEM as PRIMARY_SYSTEM
+from mars.roles.primary import REBUTTAL_SYSTEM, SYSTEM as PRIMARY_SYSTEM
 from mars.session import load_session, list_sessions
 
-app = typer.Typer(help="MARS — bounded adversarial review for ambitious cognitive work.", no_args_is_help=True)
-session_app = typer.Typer(help="Inspect past review sessions.", no_args_is_help=True)
+app = typer.Typer(help="MARS — two frontier models refine a vague idea into a watertight one.", no_args_is_help=True)
+session_app = typer.Typer(help="Inspect past refinement sessions.", no_args_is_help=True)
 keys_app = typer.Typer(help="Check which provider API keys MARS can find.", no_args_is_help=True)
 app.add_typer(session_app, name="session")
 app.add_typer(keys_app, name="keys")
@@ -30,7 +30,7 @@ def _fail(message: str) -> None:
 
 
 def _estimate(config, artifact, rounds: float) -> float:
-    """Approximate: artifact tokens x rates x roles x rounds (per PRD)."""
+    """Approximate: primary build + rounds x (challenge + rebuttal) + one synthesis."""
     rounds = int(rounds)
     block = artifact.as_prompt_block()
     total = 0.0
@@ -41,12 +41,16 @@ def _estimate(config, artifact, rounds: float) -> float:
     for _ in range(rounds):
         total += estimate_cost(
             config.model_for("adversarial"), config.provider_for("adversarial"),
-            "adversarial", ADVERSARIAL_SYSTEM + block,
+            "challenger", ADVERSARIAL_SYSTEM + block,
         )
         total += estimate_cost(
-            config.model_for("orchestrator"), config.provider_for("orchestrator"),
-            "orchestrator", ORCHESTRATOR_SYSTEM + block,
+            config.model_for("primary"), config.provider_for("primary"),
+            "rebuttal", REBUTTAL_SYSTEM + block,
         )
+    total += estimate_cost(
+        config.model_for("orchestrator"), config.provider_for("orchestrator"),
+        "synthesis", ORCHESTRATOR_SYSTEM + block,
+    )
     return total
 
 
@@ -65,7 +69,7 @@ def run(
     dry_run: bool = typer.Option(False, "--dry-run", help="Validate + estimate cost only; no API calls."),
     yes: bool = typer.Option(False, "--yes", help="Skip the cost confirmation prompt."),
 ):
-    """Run an adversarial review session."""
+    """Run an idea-refinement session."""
     try:
         cfg = load_config(config)
     except ConfigError as e:
@@ -89,7 +93,11 @@ def run(
         f"adversarial=[cyan]{cfg.provider_for('adversarial')}[/cyan], "
         f"orchestrator=[cyan]{cfg.provider_for('orchestrator')}[/cyan]"
     )
-    console.print(f"[bold]Estimated cost:[/bold] ~${est:.4f} (approximate; output tokens are budgeted)")
+    console.print(
+        f"[bold]Estimated cost:[/bold] ≥ ${est:.4f} "
+        f"(lower bound — excludes the growing transcript each round carries forward; "
+        f"actual rises with rounds)"
+    )
 
     if dry_run:
         console.print("[green]✓ Config and artifact valid.[/green]")

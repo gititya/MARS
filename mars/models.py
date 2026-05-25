@@ -15,8 +15,9 @@ T = TypeVar("T", bound=BaseModel)
 # Rough output-token budgets per role, for pre-run cost estimation only.
 OUTPUT_TOKEN_BUDGET = {
     "primary": 1500,
-    "adversarial": 2000,
-    "orchestrator": 1800,
+    "challenger": 1800,
+    "rebuttal": 1800,
+    "synthesis": 2000,
 }
 
 

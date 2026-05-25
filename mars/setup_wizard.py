@@ -24,11 +24,6 @@ FRONTIER_MODELS = {
     "openai":    ("gpt-5.5",                          "GPT-5.5                  — OpenAI frontier"),
     "gemini":    ("gemini/gemini-3.1-pro-preview",    "Gemini 3.1 Pro Preview   — Google frontier"),
 }
-ORCHESTRATOR_MODELS = {
-    "anthropic": ("claude-sonnet-4-6",               "Claude Sonnet 4.6        — structured tasks, ~5x cheaper than Opus"),
-    "openai":    ("gpt-4o",                           "GPT-4o                   — structured tasks, cost-efficient"),
-    "gemini":    ("gemini/gemini-2.5-flash",          "Gemini 2.5 Flash         — structured tasks, fast and cheap"),
-}
 FIELD_HINTS = {
     "goal":        "the decision being made",
     "artifact":    "your proposal, PRD, or plan",
@@ -147,9 +142,9 @@ def _pick(label: str, options: list[str]) -> str:
 def _step1() -> tuple[dict, dict, dict]:
     console.print(_panel(
         1, "What is MARS",
-        "MARS runs a structured adversarial review over a decision.\n"
-        "One model proposes. A second attacks it from a different provider.\n"
-        "A third compresses the fight into one concrete action.\n\n"
+        "MARS refines a vague idea into a watertight one with two frontier models.\n"
+        "One builds the idea. A peer from a different provider pressure-tests it.\n"
+        "The first defends or revises, and a third synthesizes the hardened result.\n\n"
         "[bold]Privacy:[/bold] your artifact is only sent to the providers you configure here.\n"
         "Sessions are saved locally at [dim]~/.mars/sessions/[/dim]. Nothing else leaves your machine.",
     ))
@@ -198,25 +193,25 @@ def _step1() -> tuple[dict, dict, dict]:
     console.print("[bold cyan1]Assign roles[/bold cyan1]")
 
     primary, primary_model = _pick_role(
-        "Primary (proposer) — put your strongest model here",
+        "Primary (builder) — put a frontier model here; it builds and revises the idea",
         available, FRONTIER_MODELS,
     )
     adv_opts = [p for p in available if p != primary]
     adversarial, adversarial_model = _pick_role(
-        "Adversarial (attacker) — must differ from primary, strongest model here",
+        "Challenger (peer) — must differ from primary; use your other frontier model",
         adv_opts, FRONTIER_MODELS,
     )
     orchestrator, orchestrator_model = _pick_role(
-        "Orchestrator — compresses the fight; efficient model recommended",
-        available, ORCHESTRATOR_MODELS,
+        "Orchestrator — synthesizes the hardened idea (your deliverable); keep it strong",
+        available, FRONTIER_MODELS,
     )
 
     # Rounds
     console.print()
     console.print("[bold cyan1]Rounds[/bold cyan1]")
     console.print(
-        "[dim]Each round: adversarial attacks the proposal, then the orchestrator compresses\n"
-        "and tracks what has been resolved. More rounds = deeper pressure + higher cost.\n"
+        "[dim]Each round: the peer challenges the idea, then the primary defends or revises it.\n"
+        "The idea gets tighter each round. More rounds = deeper refinement + higher cost.\n"
         "2 is a good default. Hard cap is 4.[/dim]"
     )
     raw = Prompt.ask("How many rounds?", choices=["1", "2", "3", "4"], default="2", show_choices=True)
@@ -232,8 +227,8 @@ def _step1() -> tuple[dict, dict, dict]:
 def _step2() -> Path:
     console.print(_panel(
         2, "Your artifact",
-        "An artifact is the decision or plan you want reviewed.\n"
-        "Answer 7 questions. Longer answers produce sharper critiques.\n\n"
+        "An artifact is the idea or plan you want refined.\n"
+        "Answer 7 questions. Longer answers produce a sharper refinement.\n\n"
         "For the [bold]artifact[/bold] field you can load from a file\n"
         "(.pdf  .html  .md  .txt) instead of typing.",
     ))
@@ -274,7 +269,7 @@ def _step2() -> Path:
             data[field] = _edit_field(field, hint)
 
     console.print()
-    out_str = Prompt.ask("Save artifact as", default="my-review.yaml")
+    out_str = Prompt.ask("Save artifact as", default="my-idea.yaml")
     out_path = Path(out_str)
     out_path.write_text(yaml.dump(data, allow_unicode=True, default_flow_style=False))
     console.print(f"[green]Saved to {out_path}[/green]")
@@ -314,18 +309,19 @@ def _estimate_cost(cfg, art, rounds: int) -> float:
     from mars.models import estimate_cost
     from mars.roles.adversarial import SYSTEM as ADV
     from mars.roles.orchestrator import SYSTEM as ORC
-    from mars.roles.primary import SYSTEM as PRI
+    from mars.roles.primary import REBUTTAL_SYSTEM as REB, SYSTEM as PRI
     block = art.as_prompt_block()
     total = estimate_cost(cfg.model_for("primary"), cfg.provider_for("primary"), "primary", PRI + block)
     for _ in range(rounds):
-        total += estimate_cost(cfg.model_for("adversarial"), cfg.provider_for("adversarial"), "adversarial", ADV + block)
-        total += estimate_cost(cfg.model_for("orchestrator"), cfg.provider_for("orchestrator"), "orchestrator", ORC + block)
+        total += estimate_cost(cfg.model_for("adversarial"), cfg.provider_for("adversarial"), "challenger", ADV + block)
+        total += estimate_cost(cfg.model_for("primary"), cfg.provider_for("primary"), "rebuttal", REB + block)
+    total += estimate_cost(cfg.model_for("orchestrator"), cfg.provider_for("orchestrator"), "synthesis", ORC + block)
     return total
 
 
 def _step3(config_path: Path, artifact_path: Path, rounds: int) -> None:
     console.print(_panel(
-        3, "Run your review",
+        3, "Run your refinement",
         f"Config:   [bold]{config_path}[/bold]\n"
         f"Artifact: [bold]{artifact_path}[/bold]\n"
         f"Rounds:   [bold]{rounds}[/bold]",
@@ -355,7 +351,7 @@ def _step3(config_path: Path, artifact_path: Path, rounds: int) -> None:
         f"adversarial=[cyan]{cfg.provider_for('adversarial')}[/cyan], "
         f"orchestrator=[cyan]{cfg.provider_for('orchestrator')}[/cyan]"
     )
-    console.print(f"[bold]Estimated cost:[/bold] ~${est:.4f}")
+    console.print(f"[bold]Estimated cost:[/bold] ≥ ${est:.4f} (lower bound; excludes per-round transcript growth)")
     console.print()
 
     if Confirm.ask("Dry run first (validate config, artifact, and API keys)?", default=True):
@@ -404,7 +400,7 @@ def _step3(config_path: Path, artifact_path: Path, rounds: int) -> None:
         return
 
     try:
-        with console.status("[bold]Running review...[/bold]") as status:
+        with console.status("[bold]Running refinement...[/bold]") as status:
             session = run_review(
                 cfg, art, rounds,
                 progress=lambda msg: status.update(f"[bold]{msg}[/bold]"),

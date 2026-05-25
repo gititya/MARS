@@ -1,10 +1,10 @@
-# MARS
+# MARS — Model Adversarial Refinement System
 
-MARS runs a structured adversarial review over a decision before you commit to it. One model writes a grounded proposal, a second model from a different provider attacks it, and a third compresses the fight into a single concrete decision.
+MARS takes a vague idea and refines it into a watertight one using two frontier models as peers. One model builds the idea out, a second model from a different provider pressure-tests it, the first defends or revises, and they iterate. A third model then synthesizes the hardened result into the version you should actually build.
 
-It exists because one model stabilizes on a plausible answer too fast. It produces something coherent and internally consistent, then under-attacks its own assumptions. MARS forces cross-model pressure: the attacker cannot share a provider with the proposer, so you do not get the same blind spots twice.
+It exists because one model stabilizes on a plausible answer too fast — coherent, confident, and under-tested. MARS keeps the genuine challenge (the peer is from a different provider, so you do not get correlated blind spots) but points it at *construction*: every weakness the challenger finds comes with a fix, and every fix the builder accepts feeds back into a stronger idea. The output is not a verdict — it is your idea, made tight.
 
-Use it for product direction, architecture calls, AI and workflow strategy, and high-stakes or hard-to-reverse decisions. Do not use it for bug fixes, routine implementation, or simple questions.
+Use it for product direction, architecture calls, AI and workflow strategy, and turning a half-formed idea into something buildable. Do not use it for bug fixes, routine implementation, or simple questions.
 
 ```bash
 pip install -e .             # Python 3.11+
@@ -16,18 +16,19 @@ mars run --artifact examples/prd-example.yaml --config config.yaml --dry-run
 
 ## How it works
 
-1. **You write a structured artifact.** A YAML file with the decision, the proposal, your constraints, assumptions, fears, and tradeoffs. Vague prompts are rejected with a field-level error. This is the input that makes the review sharp instead of generic.
+1. **You write a structured artifact.** A YAML file with the idea, your constraints, assumptions, fears, and tradeoffs. Vague prompts are rejected with a field-level error. This is the input that makes the refinement sharp instead of generic.
 2. **You dry run first.** `--dry-run` validates the config and artifact, prints a cost estimate, and makes zero API calls. Nothing hits a provider until you confirm.
-3. **The primary model proposes.** It restates the decision, recommends a direction, and names its own tradeoffs, assumptions, and points of low confidence. It does not defend itself.
-4. **The adversarial model attacks.** A model from a different provider tears into the proposal. Every critique has to be falsifiable and state what would resolve it. It also names the missing problem, the unstated assumption, the absent stakeholder, and the most dangerous certainty.
-5. **The orchestrator forces a decision.** It compresses the critiques, assigns a disposition to each, detects when a round just repeats the last one, and ends with one concrete action plus the objection you are most likely to ignore.
+3. **The primary builds the idea.** It restates the idea sharper than it came in, commits to concrete choices, and names its assumptions and the parts that are still soft. It builds rather than hedges, so there is something real to push on.
+4. **The challenger pressure-tests it.** A frontier peer from a different provider finds the places the idea is genuinely weak — and pairs every concern with a suggested fix. It is not here to block or to nitpick; it is here to make the idea watertight.
+5. **The primary defends or revises.** For each challenge it takes a stance — accept, revise, or defend — and re-states an improved proposal. That stronger version carries into the next round, where the challenger can concede what is now resolved.
+6. **The orchestrator delivers the hardened idea.** After the rounds, it synthesizes the result: the watertight idea, what got stronger, the decisions that still need your judgment, and the residual risks to watch. No winner, no verdict — just your idea, tightened.
 
 ---
 
 ## Commands
 
 ```bash
-mars run --artifact artifact.yaml --config config.yaml   # run a review
+mars run --artifact artifact.yaml --config config.yaml   # run a refinement
 mars run --artifact artifact.yaml --dry-run              # validate and estimate cost, no API calls
 mars run --artifact artifact.yaml --rounds 3             # override rounds (1 to 4)
 mars run --artifact artifact.yaml --yes                  # skip the cost confirmation prompt
@@ -48,15 +49,17 @@ providers:
   anthropic:
     model: claude-opus-4-7
   openai:
-    model: gpt-4o
+    model: gpt-5.5
 roles:
-  primary: anthropic
-  adversarial: openai
-  orchestrator: anthropic
+  primary: openai
+  adversarial: anthropic
+  orchestrator: openai
 rounds:
   default: 2
   max: 4
 ```
+
+Put your two strongest models on `primary` and `adversarial` — they debate as peers, so a mismatch (a weak model against a frontier one) collapses the refinement. Keep the orchestrator strong too; it writes your deliverable.
 
 Rules enforced in code, not just in the schema:
 
@@ -64,8 +67,8 @@ Rules enforced in code, not just in the schema:
 |------|-----|
 | At least 2 providers configured | The whole point is more than one model |
 | Every role maps to a configured provider | No role can point at a provider you never set up |
-| `primary` and `adversarial` must be different providers | Same provider gives correlated blind spots and kills the review |
-| `orchestrator` may share with `primary` | Recommended default, saves a key |
+| `primary` and `adversarial` must be different providers | The two debaters must be peers from different families, or you get correlated blind spots |
+| `orchestrator` may share with `primary` | Saves a key; the orchestrator does not debate, it synthesizes |
 | Rounds capped at 4 | Hard limit in code, config cannot raise it |
 
 ---
@@ -76,8 +79,8 @@ All required. Missing or blank fields fail before any API call.
 
 | Field | What goes here |
 |-------|----------------|
-| `goal` | The decision being made or the thing under review |
-| `artifact` | The proposal, PRD, design, or plan itself |
+| `goal` | The idea or thing you want to build |
+| `artifact` | The idea, proposal, PRD, design, or plan itself |
 | `constraints` | Hard limits and non-negotiables |
 | `assumptions` | What you currently believe to be true |
 | `fears` | Where you think the risk is |
@@ -90,60 +93,59 @@ Optional but recommended: `stakeholders`, `decision`. See `examples/` for three 
 
 ## The three roles
 
-- **Primary.** Writes the grounded proposal. Practical and concise. Does not pre-defend.
-- **Adversarial.** Attacks the proposal and the artifact. Falsifiable critiques only, no contrarian noise. Put your strongest model here, it does the heavy lifting.
-- **Orchestrator.** Compresses critiques across rounds, tracks dispositions, detects repetition, and forces the final call. Its last round is the final synthesis, there is no separate summary pass.
+- **Primary (builder).** Builds the idea out concretely, then defends or revises it each round. Put a frontier model here.
+- **Challenger (peer).** Pressure-tests the current idea — genuine weaknesses only, each paired with a fix, no nitpick quota. Must be a frontier model from a different provider; it is a peer, not a junior reviewer.
+- **Orchestrator.** Runs once at the end and synthesizes the hardened idea for you. It does not referee the debate or pick a winner — it delivers the result.
 
-Each critique gets one disposition: `resolved`, `refuted`, `acceptable_risk`, `unresolved`, `decision_blocker`, or `requires_evidence`.
+Each round, the builder takes a stance on every challenge: `accept` (fold in the fix), `revise` (adjust), or `defend` (hold, with reasoning). The challenger can `concede` points the builder has genuinely answered.
 
 ---
 
-## The final decision
+## What you get back
 
-Every run ends with exactly one action, each with required specifics:
+A run does not end with a verdict. It ends with the hardened idea:
 
-| Action | Comes with |
+| Output | What it is |
 |--------|------------|
-| `PROCEED` | What test or validation confirms it |
-| `PROCEED_WITH_CONDITION` | The condition that must hold |
-| `TEST_FIRST` | What to test and how |
-| `ESCALATE` | To whom, on what question |
-| `DEFER` | Until what is true |
-| `DISCARD` | Why |
-
-The synthesis also always reports the strongest objection you are most likely to dismiss, and the direction your bias is probably pulling you.
+| **Hardened idea** | The watertight version, written as the thing to actually build |
+| **What got stronger** | The concrete improvements the refinement produced |
+| **Open decisions** | The calls that genuinely need your judgment — real tradeoffs the models could not settle for you |
+| **Watch items** | Residual risks worth tracking while you build |
 
 ---
 
 ## Sample output
 
 ```text
-============ MARS review : session 20260525T105351Z ============
-Primary
-  Recommendation: Build the CLI first, web app later.
+============ MARS refinement : session 20260525T105351Z ============
+Primary build
+  Proposal: A CLI that hardens product ideas via two-model debate.
 
-Round 1 : adversarial
-  major   "CLI assumes a technical user"   resolve: survey target users
-  Missing problem: distribution
-  Absent stakeholder: non-technical users
-  Most dangerous certainty: "a CLI is enough to share"
+Round 1 : peer challenge
+  Concern: "assumes the user can write a structured artifact"
+    why: vague input produces vague refinement
+    fix: add a guided wizard that builds the artifact from prompts
 
-FINAL SYNTHESIS
-  ► TEST_FIRST
-  Ship the CLI to 5 target users before building the web app.
+Round 1 : primary rebuttal
+  accept  "added a setup wizard that elicits the 7 fields"
 
-  Strongest ignored objection: nobody installs CLIs
-  Most likely operator bias: wants to build, not validate
+HARDENED IDEA
+  A CLI where two frontier peers turn a rough idea into a buildable one,
+  with a guided wizard so the input is always structured.
 
-Completed all 1 planned round(s).
+  What got stronger: input quality, concrete role assignment
+  Open decisions (your call): which providers to default to
+  Watch items: cost per run at 4 rounds
+
+Completed all 1 planned round(s) of refinement.
 ```
 
 ---
 
 ## Cost and rounds
 
-- Cost is estimated before every run from litellm's price map and a per-role output budget. The estimate prints first and you confirm before any calls, unless you pass `--yes`.
-- Rounds default to 2 and cap at 4. If a round mostly repeats the previous one, the orchestrator flags it and the run stops early with a logged reason.
+- Cost is estimated before every run from litellm's price map and a per-role output budget. A run is the primary build, then each round's challenge and rebuttal, then one synthesis. The estimate prints first and you confirm before any calls, unless you pass `--yes`.
+- Rounds default to 2 and cap at 4. Each round deepens the refinement; more rounds means a tighter idea at higher cost.
 
 ---
 

@@ -64,8 +64,8 @@ def add_command(env_name: str) -> str:
 
 
 def update_command(env_name: str) -> str:
-    """Delete then re-add — more reliable than -U which can silently fail."""
+    """Delete then re-add with a hidden prompt — keeps the key out of shell history."""
     return (
-        f"security delete-generic-password -a {KEYCHAIN_ACCOUNT} -s {env_name} && "
+        f"security delete-generic-password -a {KEYCHAIN_ACCOUNT} -s {env_name} ; "
         f"security add-generic-password -a {KEYCHAIN_ACCOUNT} -s {env_name} -w"
     )
