@@ -1,0 +1,28 @@
+# MARS configuration.
+#
+# Configure one model per provider you want available, then map roles to them.
+#
+# RULES (enforced in code):
+#   - At least 2 providers must be configured.
+#   - Every role must map to a configured provider.
+#   - primary and adversarial MUST be different providers (cross-model pressure is
+#     the whole point — same provider gives correlated blind spots).
+#   - orchestrator may share a provider with primary (recommended default).
+#   - rounds: 1–4. The max of 4 is a hard cap in code; config cannot exceed it.
+
+providers:
+  anthropic:
+    model: claude-opus-4-7        # any valid Anthropic model ID
+  openai:
+    model: gpt-4o                 # any valid OpenAI model ID
+  gemini:
+    model: gemini-1.5-pro         # any valid Gemini model ID
+
+roles:
+  primary: anthropic              # coherent proposal, grounded recommendation
+  adversarial: openai             # assign the strongest available model here — load-bearing role
+  orchestrator: anthropic         # may share with primary
+
+rounds:
+  default: 2                      # used when --rounds is not passed
+  max: 4                          # hard cap; code refuses anything above 4

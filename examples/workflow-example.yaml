@@ -1,0 +1,38 @@
+goal: >
+  Decide whether to adopt an AI-assisted triage step in our customer support workflow.
+
+artifact: >
+  Proposal: insert an LLM classifier at the front of our support queue that tags
+  incoming tickets by topic and urgency, drafts a suggested reply, and auto-routes to
+  the right team. Agents review and edit before sending. Goal is to cut median
+  first-response time from 6 hours to under 1 hour.
+
+constraints:
+  - 8 support agents across two time zones
+  - Tickets contain customer PII; data handling policy forbids sending PII to third parties without a DPA
+  - Must integrate with existing Zendesk instance
+  - Budget for AI tooling is capped at $500/month
+
+assumptions:
+  - The classifier will be accurate enough that agents trust the routing
+  - Drafted replies save more time than they cost to review and correct
+  - Customers will not perceive the replies as impersonal or templated
+
+fears:
+  - Agents rubber-stamp wrong AI drafts and quality drops
+  - Misrouting increases resolution time for edge-case tickets
+  - PII leaves our boundary without proper agreements in place
+
+tradeoffs:
+  - Speed of first response vs. risk of lower answer quality
+  - Automation coverage vs. agent trust and adoption
+  - Cost of the AI tooling vs. agent time saved
+
+context: >
+  Mid-size SaaS support org. Agents are measured on first-response time and CSAT.
+  Current process is fully manual triage from a shared queue.
+
+stakeholders:
+  - Support agents (workflow changes for them daily)
+  - Customers (experience the response quality)
+  - Compliance/legal (PII handling)

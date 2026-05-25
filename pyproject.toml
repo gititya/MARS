@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mars-review"
+version = "0.1.0"
+description = "MARS — a bounded adversarial review system for ambitious cognitive work"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Aditya Seshadri" }]
+dependencies = [
+    "litellm~=1.55",
+    "typer~=0.15",
+    "pydantic~=2.10",
+    "rich~=13.9",
+    "pyyaml~=6.0",
+]
+
+[project.scripts]
+mars = "mars.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["mars"]

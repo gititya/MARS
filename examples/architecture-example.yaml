@@ -1,0 +1,42 @@
+goal: >
+  Decide whether to move our monolith's background jobs onto a separate queue service
+  or keep them in-process with the web app.
+
+artifact: >
+  Our Django monolith runs background jobs (email, report generation, data syncs) in
+  the same process pool as web requests using a thread-based scheduler. Under load,
+  long-running report jobs starve web request latency. Proposal: extract jobs to a
+  dedicated worker fleet backed by a Redis-based queue, deployed as a separate service.
+
+constraints:
+  - Team of 3 backend engineers, no dedicated platform/infra team
+  - Existing Redis instance is already used for caching
+  - Cannot tolerate more than 1 hour of downtime for the migration
+  - Reports must remain available during the transition
+
+assumptions:
+  - Redis can handle the additional queue load alongside caching
+  - Worker fleet will reduce p99 web latency materially
+  - The team can operate a second deployable service without new tooling
+
+fears:
+  - Operational complexity of a second service outweighs the latency win
+  - Redis becomes a single point of failure for both cache and jobs
+  - Migration introduces job duplication or loss during cutover
+
+tradeoffs:
+  - Latency isolation vs. operational overhead of a new service
+  - Reusing existing Redis vs. provisioning a dedicated broker
+  - Big-bang cutover vs. gradual per-job-type migration
+
+context: >
+  B2B SaaS product, ~5k active accounts. Reports are a paid feature; their reliability
+  is contractual. The system is deployed on a single cloud provider with managed Redis.
+
+stakeholders:
+  - Backend engineers who will operate the new service
+  - Customer success (report reliability is a contractual obligation)
+
+decision: >
+  Whether to extract background jobs to a separate queue-backed worker service now,
+  or defer and instead cap report concurrency in-process as a stopgap.

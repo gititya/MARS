@@ -1,0 +1,28 @@
+goal: >
+  Decide whether to build the adversarial review system as a web app or CLI first.
+
+artifact: >
+  We are building MARS, an adversarial review system. Current plan is web app first
+  for shareability, then CLI. Key constraint: solo builder, ~1 week available.
+
+constraints:
+  - Solo builder, no team
+  - 1 week time budget for MVP
+  - Must be open-sourceable from day one
+
+assumptions:
+  - Web app is faster to share with others
+  - CLI is faster to build for a solo developer
+  - The target user is technical
+
+fears:
+  - Web app scope creeps and delays the whole thing
+  - CLI feels too rough for sharing publicly
+
+tradeoffs:
+  - Shareability vs. build speed
+  - User experience vs. time to working prototype
+
+context: >
+  Personal productivity tool that may be open-sourced. Primary user is the builder.
+  No auth or multi-user requirements for MVP.
