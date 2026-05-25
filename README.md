@@ -157,9 +157,37 @@ Completed all 1 planned round(s).
 
 ---
 
+## API keys
+
+MARS needs one key per provider you map a role to. The recommended place to put them is the macOS Keychain, scoped to MARS.
+
+Store each key under the account `mars`, with the service name equal to the provider's variable. The command below prompts for the key with hidden input and a retype, so it never lands in your shell history:
+
+```bash
+security add-generic-password -a mars -s ANTHROPIC_API_KEY -w
+security add-generic-password -a mars -s OPENAI_API_KEY -w
+```
+
+Then confirm MARS can see them. Values are never printed, only whether each key was found:
+
+```bash
+mars keys status --config config.yaml
+```
+
+A Keychain entry under account `mars` always wins over a shell variable of the same name, so a dedicated MARS key takes precedence over a stale or shared global key. If there is no Keychain entry, MARS falls back to the shell environment, which is handy on CI or non-macOS machines.
+
+To rotate or remove a key:
+
+```bash
+security add-generic-password -a mars -s OPENAI_API_KEY -w -U   # update in place
+security delete-generic-password -a mars -s OPENAI_API_KEY      # remove
+```
+
+---
+
 ## Security
 
-- No keys in code. Providers read their keys from environment variables (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`).
+- No keys in code. Keys come from the macOS Keychain (account `mars`) or environment variables, read at startup.
 - `.env`, session logs, and credential files are gitignored. Only `.env.example` is tracked.
 - Session logs are written locally to `~/.mars/sessions/` and never sent anywhere.
 

@@ -5,6 +5,7 @@ from rich.console import Console
 
 from mars.artifact import ArtifactError, load_artifact
 from mars.config import ConfigError, load_config
+from mars.keys import PROVIDER_ENV, add_command, load_keys
 from mars.loop import run_review
 from mars.models import estimate_cost
 from mars.output import render_session, render_session_list
@@ -15,7 +16,9 @@ from mars.session import load_session, list_sessions
 
 app = typer.Typer(help="MARS — bounded adversarial review for ambitious cognitive work.", no_args_is_help=True)
 session_app = typer.Typer(help="Inspect past review sessions.", no_args_is_help=True)
+keys_app = typer.Typer(help="Check which provider API keys MARS can find.", no_args_is_help=True)
 app.add_typer(session_app, name="session")
+app.add_typer(keys_app, name="keys")
 
 console = Console()
 err = Console(stderr=True)
@@ -85,6 +88,15 @@ def run(
         console.print("[green]Dry run OK[/green] — config and artifact valid. No API calls made.")
         raise typer.Exit(code=0)
 
+    key_status = load_keys(cfg)
+    used = {cfg.provider_for(r) for r in ("primary", "adversarial", "orchestrator")}
+    missing = [p for p, src in key_status.items() if src == "missing" and p in used]
+    if missing:
+        lines = [f"No API key found (shell env or Keychain) for: {', '.join(missing)}."]
+        for p in missing:
+            lines.append(f"  add it with: {add_command(PROVIDER_ENV.get(p, p.upper() + '_API_KEY'))}")
+        _fail("\n".join(lines))
+
     if not yes:
         if not typer.confirm("Proceed with API calls?"):
             console.print("Aborted.")
@@ -116,6 +128,37 @@ def session_show(session_id: str = typer.Argument(..., help="Session ID to displ
 def session_list():
     """List past sessions."""
     render_session_list(list_sessions())
+
+
+@keys_app.command("status")
+def keys_status(config: str = typer.Option("config.yaml", "--config", help="Path to the config YAML.")):
+    """Show which configured providers have a key MARS can find. Values are never printed."""
+    try:
+        cfg = load_config(config)
+    except ConfigError as e:
+        _fail(str(e))
+
+    status = load_keys(cfg)
+    from rich.table import Table
+
+    table = Table(show_header=True, header_style="bold")
+    table.add_column("Provider")
+    table.add_column("Keychain service")
+    table.add_column("Source")
+    label = {
+        "env": "[green]shell env[/green]",
+        "keychain": "[green]keychain[/green]",
+        "missing": "[red]missing[/red]",
+    }
+    for provider, src in status.items():
+        env_name = PROVIDER_ENV.get(provider, provider.upper() + "_API_KEY")
+        table.add_row(provider, env_name, label.get(src, src))
+    console.print(table)
+
+    missing = [p for p, src in status.items() if src == "missing"]
+    for p in missing:
+        env_name = PROVIDER_ENV.get(p, p.upper() + "_API_KEY")
+        console.print(f"[dim]To add {p}: {add_command(env_name)}[/dim]")
 
 
 if __name__ == "__main__":
