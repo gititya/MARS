@@ -46,3 +46,18 @@ Session 2 complete — `mars setup` wizard built and mostly working. Blocked on 
 3. **Surface it to the operator.** Consider a synthesis-level signal (in `SynthesisOutput` / orchestrator prompt) that flags "no pushback detected — builder accepted every challenge," so the user knows the debate may have been one-sided.
 4. **Test model-specificity.** Swap roles (Opus builder vs GPT-5.5 challenger) to check whether the all-accept behavior is the builder model being agreeable vs. a structural prompt issue.
 5. Decide whether `defend`/`revise` should ever be *required* (risky — forcing disagreement reintroduces challenge-for-its-own-sake, the thing we explicitly removed). Lean toward prompt nudges + operator visibility over hard quotas.
+
+### 3. Docker packaging
+Ship MARS as a container so anyone can run it without the venv/Python setup. Not in the original PRD — added by user. Needs: a Dockerfile, a decision on how keys are passed in (env vars, since the macOS Keychain path doesn't exist inside a Linux container), and a documented `docker run` invocation. Sessions dir would need a mounted volume to persist.
+
+### 4. Web app (PRD Phase 2)
+Browser UI over the same refinement engine. PRD spec: FastAPI backend wrapping the core Python logic, streaming round-by-round output (build → challenge → rebuttal → synthesis), an artifact input form, and a session-history view. Hard rule: the CLI core stays the single source of logic; the web app wraps `run_review`, it does not fork the pipeline.
+
+### 5. (minor) CI hardcoded-key grep check
+Open-source-checklist item from the PRD, never built. A CI step that greps source for secret patterns before merge.
+
+### 6. (minor) Gemini third-provider path
+Supported in `config.example.yaml` but never exercised under the new refinement flow. Validate a full run with Gemini in a role works end to end.
+
+### 7. (meta) PRD is stale
+`/Users/aditya/Documents/obsidian/cortex/AI-OS/adversarial-review-system-prd.md` still describes the pre-pivot adversarial-*review* product (dispositions, PROCEED/DISCARD, repetition detection — all deliberately removed). Update or supersede it to reflect the refinement system. Until then it is NOT the source of truth — this SKILL.md + the backlog memory are.
