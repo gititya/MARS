@@ -13,8 +13,8 @@ SESSIONS_DIR = Path.home() / ".mars" / "sessions"
 
 class RoundRecord(BaseModel):
     index: int
-    adversarial: dict[str, Any]
-    orchestrator: dict[str, Any]
+    challenge: dict[str, Any]
+    rebuttal: dict[str, Any]
 
 
 class SessionRecord(BaseModel):
@@ -25,15 +25,12 @@ class SessionRecord(BaseModel):
     artifact: dict[str, Any]
     primary: dict[str, Any] | None = None
     rounds: list[RoundRecord] = []
+    synthesis: dict[str, Any] | None = None
     stop_reason: str | None = None
     log: list[str] = []
 
     def add_log(self, message: str) -> None:
         self.log.append(message)
-
-    @property
-    def final_orchestrator(self) -> dict[str, Any] | None:
-        return self.rounds[-1].orchestrator if self.rounds else None
 
     def save(self) -> Path:
         SESSIONS_DIR.mkdir(parents=True, exist_ok=True)

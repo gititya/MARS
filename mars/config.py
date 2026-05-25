@@ -60,8 +60,8 @@ class Config(BaseModel):
         if self.roles.primary == self.roles.adversarial:
             raise ConfigError(
                 f"primary and adversarial must be different providers (both are "
-                f"'{self.roles.primary}'). Same provider gives correlated blind spots and "
-                f"defeats the purpose of adversarial review. Assign them to different providers."
+                f"'{self.roles.primary}'). The two debaters must be peers from different "
+                f"families, or you get correlated blind spots. Assign them to different providers."
             )
 
         if self.rounds.max > MAX_ROUNDS:

@@ -9,6 +9,13 @@
 # Sessions (local review logs may contain artifact content)
 sessions/
 
+# User-local working config (use config.example.yaml as the template)
+config.yaml
+
+# Personal artifacts / idea inputs — keep out of the public repo
+voice-support
+*.artifact.yaml
+
 # Python
 __pycache__/
 *.py[cod]

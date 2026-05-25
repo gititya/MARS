@@ -1,80 +1,60 @@
 """Pydantic models for the structured (JSON) outputs of each role.
 
-Using JSON output (not prose-header scraping) is what makes disposition tracking and
-repetition detection reliable instead of best-effort.
+Using JSON output (not prose-header scraping) is what makes the rebuttal loop and
+synthesis reliable instead of best-effort. The flow is constructive: the primary
+builds an idea, the challenger stress-tests it to make it watertight, the primary
+defends or revises, and the orchestrator synthesizes the hardened result.
 """
 
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
-class Severity(str, Enum):
-    critical = "critical"  # decision blocker
-    major = "major"        # materially changes the recommendation
-    minor = "minor"        # worth noting, not blocking
-
-
-class Disposition(str, Enum):
-    resolved = "resolved"
-    refuted = "refuted"
-    acceptable_risk = "acceptable_risk"
-    unresolved = "unresolved"
-    decision_blocker = "decision_blocker"
-    requires_evidence = "requires_evidence"
-
-
-class RecommendedAction(str, Enum):
-    PROCEED = "PROCEED"
-    PROCEED_WITH_CONDITION = "PROCEED_WITH_CONDITION"
-    TEST_FIRST = "TEST_FIRST"
-    ESCALATE = "ESCALATE"
-    DEFER = "DEFER"
-    DISCARD = "DISCARD"
+class Stance(str, Enum):
+    accept = "accept"    # the challenge is right; fold the fix into the idea
+    revise = "revise"    # partially right; adjust the idea accordingly
+    defend = "defend"    # the idea holds; explain why, with reasoning
 
 
 class PrimaryOutput(BaseModel):
-    framing: str
-    recommendation: str
-    tradeoffs: list[str]
-    assumptions: list[str]
-    uncertainty: list[str]
+    """The primary model's initial build of the idea."""
+    framing: str              # the idea restated sharper than it came in
+    proposal: str             # the built-out idea: how it would actually work
+    key_choices: list[str]    # the consequential decisions this build commits to
+    assumptions: list[str]    # what must hold for the build to stand
+    open_questions: list[str] # what is still vague and needs resolving
 
 
-class Critique(BaseModel):
+class Challenge(BaseModel):
     id: str
-    claim: str
-    reasoning: str
-    severity: Severity
-    resolution: str  # what evidence/test would resolve it
+    concern: str       # the genuine weakness, stated honestly
+    why_it_matters: str
+    suggestion: str    # constructive: how to strengthen or resolve it
 
 
-class AdversarialOutput(BaseModel):
-    critiques: list[Critique]
-    missing_problem: str
-    missing_assumption: str
-    absent_stakeholder: str
-    most_dangerous_certainty: str
+class ChallengerOutput(BaseModel):
+    """The peer challenger's pass at the current proposal."""
+    challenges: list[Challenge]
+    conceded: list[str]  # prior-round points now accepted as resolved (empty round 1)
+    biggest_risk: str    # the single most important thing to get right
 
 
-class CompressedCritique(BaseModel):
-    id: str
-    summary: str
-    disposition: Disposition
-    discard_reason: str | None = None  # required when merged/discarded
+class RebuttalItem(BaseModel):
+    challenge_id: str
+    stance: Stance
+    response: str  # the reasoning behind the stance
 
 
-class OrchestratorOutput(BaseModel):
-    compressed_critiques: list[CompressedCritique]
-    decision_blockers: list[str]
-    unresolved_questions: list[str]
-    recommended_action: RecommendedAction
-    recommended_action_detail: str  # the required specifics for the chosen action
-    strongest_ignored_objection: str
-    operator_bias_direction: str
-    new_critique_count: int = Field(
-        description="How many critiques this round are genuinely new vs prior rounds."
-    )
-    repetition_detected: bool = Field(
-        description="True if this round mostly repeats prior rounds (>~70% overlap)."
-    )
+class RebuttalOutput(BaseModel):
+    """The primary model's response to a round of challenges."""
+    responses: list[RebuttalItem]
+    updated_proposal: str  # the idea after folding in accepted/revised points
+
+
+class SynthesisOutput(BaseModel):
+    """The orchestrator's final delivery to the operator: the hardened idea."""
+    hardened_idea: str            # the watertight version, the deliverable
+    what_got_stronger: list[str]  # concrete improvements the debate produced
+    open_decisions: list[str]     # calls that genuinely need the operator's judgment
+    watch_items: list[str]        # residual risks to keep an eye on while building

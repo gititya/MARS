@@ -61,3 +61,11 @@ def load_keys(config: Config) -> dict[str, str]:
 def add_command(env_name: str) -> str:
     """The exact command a user runs to store a key (prompts, no shell history)."""
     return f"security add-generic-password -a {KEYCHAIN_ACCOUNT} -s {env_name} -w"
+
+
+def update_command(env_name: str) -> str:
+    """Delete then re-add with a hidden prompt — keeps the key out of shell history."""
+    return (
+        f"security delete-generic-password -a {KEYCHAIN_ACCOUNT} -s {env_name} ; "
+        f"security add-generic-password -a {KEYCHAIN_ACCOUNT} -s {env_name} -w"
+    )
