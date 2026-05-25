@@ -12,16 +12,16 @@
 
 providers:
   anthropic:
-    model: claude-opus-4-7        # any valid Anthropic model ID
+    model: claude-opus-4-7              # frontier — use claude-sonnet-4-6 for orchestrator
   openai:
-    model: gpt-4o                 # any valid OpenAI model ID
+    model: gpt-5.5                      # frontier — use gpt-4o for orchestrator
   gemini:
-    model: gemini-1.5-pro         # any valid Gemini model ID
+    model: gemini/gemini-3.1-pro-preview  # frontier — use gemini/gemini-2.5-flash for orchestrator
 
 roles:
   primary: anthropic              # coherent proposal, grounded recommendation
   adversarial: openai             # assign the strongest available model here — load-bearing role
-  orchestrator: anthropic         # may share with primary
+  orchestrator: anthropic         # may share with primary; efficient model recommended
 
 rounds:
   default: 2                      # used when --rounds is not passed

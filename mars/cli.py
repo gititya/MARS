@@ -51,6 +51,13 @@ def _estimate(config, artifact, rounds: float) -> float:
 
 
 @app.command()
+def setup():
+    """Interactive first-time setup: configure providers, assign roles, and build an artifact."""
+    from mars.setup_wizard import run_setup
+    run_setup()
+
+
+@app.command()
 def run(
     artifact: str = typer.Option(..., "--artifact", help="Path to the artifact YAML."),
     config: str = typer.Option("config.yaml", "--config", help="Path to the config YAML."),
@@ -85,7 +92,25 @@ def run(
     console.print(f"[bold]Estimated cost:[/bold] ~${est:.4f} (approximate; output tokens are budgeted)")
 
     if dry_run:
-        console.print("[green]Dry run OK[/green] — config and artifact valid. No API calls made.")
+        console.print("[green]✓ Config and artifact valid.[/green]")
+        from mars.setup_wizard import _validate_key
+        used_providers = {cfg.provider_for(r) for r in ("primary", "adversarial", "orchestrator")}
+        load_keys(cfg)
+        all_ok = True
+        with console.status("Checking API keys..."):
+            for p in used_providers:
+                ok, msg = _validate_key(p)
+                console.print(f"  {msg}")
+                if not ok:
+                    all_ok = False
+        if not all_ok:
+            from mars.keys import update_command
+            for p in used_providers:
+                ok, _ = _validate_key(p)
+                if not ok:
+                    env_name = PROVIDER_ENV.get(p, p.upper() + "_API_KEY")
+                    err.print(f"  Update: {update_command(env_name)}")
+            _fail("Key validation failed. Fix the issue above and retry.")
         raise typer.Exit(code=0)
 
     key_status = load_keys(cfg)

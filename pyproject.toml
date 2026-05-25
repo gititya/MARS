@@ -16,6 +16,8 @@ dependencies = [
     "pydantic~=2.10",
     "rich~=13.9",
     "pyyaml~=6.0",
+    "pypdf~=4.0",
+    "prompt-toolkit~=3.0",
 ]
 
 [project.scripts]
