@@ -3,7 +3,7 @@
 Two frontier peers harden a vague idea into a watertight one. The primary builds,
 the challenger pressure-tests, the primary defends/concedes/revises, and the improved
 proposal carries into the next round. After the planned rounds, the orchestrator runs
-once to synthesize the hardened idea for the operator. There is no winner, no verdict —
+once to synthesize the hardened idea for the operator. There is no winner, no verdict:
 the output is the strengthened idea.
 """
 

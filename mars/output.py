@@ -16,7 +16,7 @@ def _bullets(items: list[str]) -> str:
 
 
 def render_session(session: SessionRecord) -> None:
-    console.rule(f"[bold]MARS refinement — session {session.session_id}[/bold]")
+    console.rule(f"[bold]MARS refinement - session {session.session_id}[/bold]")
 
     if session.primary:
         p = session.primary
@@ -38,7 +38,7 @@ def render_session(session: SessionRecord) -> None:
         for c in ch["challenges"]:
             table.add_row(c["concern"], c["why_it_matters"], c["suggestion"])
         console.print(
-            Panel(table, title=f"Round {rnd.index} — peer challenge", border_style="red")
+            Panel(table, title=f"Round {rnd.index} - peer challenge", border_style="red")
         )
         meta = f"[bold]Biggest risk[/bold]: {ch['biggest_risk']}"
         if ch.get("conceded"):
@@ -53,7 +53,7 @@ def render_session(session: SessionRecord) -> None:
             style = _STANCE_STYLE.get(r["stance"], "")
             resp.add_row(f"[{style}]{r['stance']}[/{style}]", r["response"])
         console.print(
-            Panel(resp, title=f"Round {rnd.index} — primary rebuttal", border_style="cyan")
+            Panel(resp, title=f"Round {rnd.index} - primary rebuttal", border_style="cyan")
         )
 
     s = session.synthesis
@@ -83,6 +83,6 @@ def render_session_list(sessions: list[SessionRecord]) -> None:
             s.session_id,
             s.timestamp,
             str(len(s.rounds)),
-            "yes" if s.synthesis else "—",
+            "yes" if s.synthesis else "-",
         )
     console.print(table)

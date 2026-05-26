@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "mars-review"
 version = "0.1.0"
-description = "MARS — a bounded adversarial review system for ambitious cognitive work"
+description = "MARS: two frontier models refine a vague idea into a watertight one"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }

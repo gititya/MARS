@@ -1,4 +1,4 @@
-"""MARS CLI — Typer entrypoint."""
+"""MARS CLI - Typer entrypoint."""
 
 import typer
 from rich.console import Console
@@ -14,7 +14,7 @@ from mars.roles.orchestrator import SYSTEM as ORCHESTRATOR_SYSTEM
 from mars.roles.primary import REBUTTAL_SYSTEM, SYSTEM as PRIMARY_SYSTEM
 from mars.session import load_session, list_sessions
 
-app = typer.Typer(help="MARS — two frontier models refine a vague idea into a watertight one.", no_args_is_help=True)
+app = typer.Typer(help="MARS - two frontier models refine a vague idea into a watertight one.", no_args_is_help=True)
 session_app = typer.Typer(help="Inspect past refinement sessions.", no_args_is_help=True)
 keys_app = typer.Typer(help="Check which provider API keys MARS can find.", no_args_is_help=True)
 app.add_typer(session_app, name="session")
@@ -88,14 +88,14 @@ def run(
 
     est = _estimate(cfg, art, n_rounds)
     console.print(
-        f"[bold]Plan:[/bold] {n_rounds} round(s) — "
+        f"[bold]Plan:[/bold] {n_rounds} round(s) - "
         f"primary=[cyan]{cfg.provider_for('primary')}[/cyan], "
         f"adversarial=[cyan]{cfg.provider_for('adversarial')}[/cyan], "
         f"orchestrator=[cyan]{cfg.provider_for('orchestrator')}[/cyan]"
     )
     console.print(
         f"[bold]Estimated cost:[/bold] ≥ ${est:.4f} "
-        f"(lower bound — excludes the growing transcript each round carries forward; "
+        f"(lower bound - excludes the growing transcript each round carries forward; "
         f"actual rises with rounds)"
     )
 

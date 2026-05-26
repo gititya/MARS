@@ -1,7 +1,7 @@
 """litellm wrapper: structured JSON calls + cost estimation.
 
 The pipeline is inherently sequential (primary -> adversarial -> orchestrator), so there
-is nothing to parallelize within a round — calls are plain synchronous completions.
+is nothing to parallelize within a round - calls are plain synchronous completions.
 """
 
 import json

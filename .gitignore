@@ -12,7 +12,7 @@ sessions/
 # User-local working config (use config.example.yaml as the template)
 config.yaml
 
-# Personal artifacts / idea inputs — keep out of the public repo
+# Personal artifacts / idea inputs - keep out of the public repo
 voice-support
 *.artifact.yaml
 

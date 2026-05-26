@@ -41,7 +41,7 @@ def _panel(step: int, title: str, body: str) -> Panel:
 
 
 def _keychain_store(env_name: str, value: str) -> bool:
-    # Delete first (ignore failure if not found), then add fresh — more reliable than -U
+    # Delete first (ignore failure if not found), then add fresh - more reliable than -U
     subprocess.run(
         ["security", "delete-generic-password", "-a", KEYCHAIN_ACCOUNT, "-s", env_name],
         capture_output=True,
@@ -87,7 +87,7 @@ def _read_file(path_str: str) -> tuple[str | None, str | None]:
 
 
 def _edit_field(label: str, hint: str) -> str:
-    """Multiline terminal input — Enter for new lines, Ctrl+D to submit."""
+    """Multiline terminal input - Enter for new lines, Ctrl+D to submit."""
     from prompt_toolkit import prompt as pt_prompt
     from prompt_toolkit.key_binding import KeyBindings
     from prompt_toolkit.styles import Style
@@ -100,7 +100,7 @@ def _edit_field(label: str, hint: str) -> str:
 
     style = Style.from_dict({"prompt": "ansicyan bold"})
 
-    console.print(f"\n  [bold]{label}[/bold] — [dim]{hint}[/dim]")
+    console.print(f"\n  [bold]{label}[/bold] - [dim]{hint}[/dim]")
     console.print("  [dim]Enter for new lines. Ctrl+D when done.[/dim]")
     text = pt_prompt("  > ", multiline=True, key_bindings=kb, style=style)
     return text.strip()
@@ -121,7 +121,7 @@ def _pick_role(label: str, providers: list[str], model_tier: dict) -> tuple[str,
 
 
 def _pick(label: str, options: list[str]) -> str:
-    """Numbered menu — user types 1/2/3, never a free-form provider name."""
+    """Numbered menu - user types 1/2/3, never a free-form provider name."""
     console.print(f"\n  [bold]{label}[/bold]")
     for i, opt in enumerate(options, 1):
         console.print(f"    {i}. {opt}")
@@ -186,16 +186,16 @@ def _step1() -> tuple[dict, dict, dict]:
     console.print("[bold cyan1]Assign roles[/bold cyan1]")
 
     primary, primary_model = _pick_role(
-        "Primary (builder) — put a frontier model here; it builds and revises the idea",
+        "Primary (builder) - put a frontier model here; it builds and revises the idea",
         available, FRONTIER_MODELS,
     )
     adv_opts = [p for p in available if p != primary]
     adversarial, adversarial_model = _pick_role(
-        "Challenger (peer) — must differ from primary; use your other frontier model",
+        "Challenger (peer) - must differ from primary; use your other frontier model",
         adv_opts, FRONTIER_MODELS,
     )
     orchestrator, orchestrator_model = _pick_role(
-        "Orchestrator — synthesizes the hardened idea (your deliverable); keep it strong",
+        "Orchestrator - synthesizes the hardened idea (your deliverable); keep it strong",
         available, FRONTIER_MODELS,
     )
 
@@ -229,7 +229,7 @@ def _step2() -> Path:
     data: dict = {}
     for field, hint in FIELD_HINTS.items():
         if field == "artifact":
-            console.print(f"\n  [bold]artifact[/bold] — [dim]{hint}[/dim]")
+            console.print(f"\n  [bold]artifact[/bold] - [dim]{hint}[/dim]")
             if Confirm.ask("  Load from file?", default=False):
                 console.print("  [dim]Tip: drag a file onto this window to paste its path.[/dim]")
                 sections: list[str] = []
@@ -281,13 +281,13 @@ def _validate_key(provider: str) -> tuple[bool, str]:
             messages=[{"role": "user", "content": "hi"}],
             max_tokens=1,
         )
-        return True, f"[green]✓ {provider}[/green] — key valid, credits available"
+        return True, f"[green]✓ {provider}[/green] - key valid, credits available"
     except litellm.AuthenticationError as e:
-        return False, f"[red]✗ {provider}[/red] — key rejected (invalid or revoked): {e.message if hasattr(e, 'message') else str(e)}"
+        return False, f"[red]✗ {provider}[/red] - key rejected (invalid or revoked): {e.message if hasattr(e, 'message') else str(e)}"
     except litellm.RateLimitError:
-        return False, f"[red]✗ {provider}[/red] — key valid but quota or credits exhausted"
+        return False, f"[red]✗ {provider}[/red] - key valid but quota or credits exhausted"
     except Exception as e:
-        return False, f"[red]✗ {provider}[/red] — {type(e).__name__}: {e}"
+        return False, f"[red]✗ {provider}[/red] - {type(e).__name__}: {e}"
 
 
 def _estimate_cost(cfg, art, rounds: int) -> float:
@@ -331,7 +331,7 @@ def _step3(config_path: Path, artifact_path: Path, rounds: int) -> None:
 
     est = _estimate_cost(cfg, art, rounds)
     console.print(
-        f"[bold]Plan:[/bold] {rounds} round(s) — "
+        f"[bold]Plan:[/bold] {rounds} round(s) - "
         f"primary=[cyan]{cfg.provider_for('primary')}[/cyan], "
         f"adversarial=[cyan]{cfg.provider_for('adversarial')}[/cyan], "
         f"orchestrator=[cyan]{cfg.provider_for('orchestrator')}[/cyan]"

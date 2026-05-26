@@ -28,7 +28,7 @@ def run_rebuttal(
     """Primary responds to a round of challenges and re-states the improved idea.
 
     Validates that the response addresses every challenge exactly once with no unknown
-    or duplicate IDs — otherwise a dropped concern would silently vanish from the loop.
+    or duplicate IDs - otherwise a dropped concern would silently vanish from the loop.
     Re-prompts once with the specific mismatch before failing.
     """
     expected = [c.id for c in challenge.challenges]

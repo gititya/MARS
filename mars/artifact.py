@@ -3,7 +3,7 @@
 The system rejects vague prompts: all required fields must be present and non-empty
 before any API call is made. Field-level errors tell the user exactly what is missing.
 A scope check warns (does not block) if the input looks like a bug report / code diff /
-one-line question — the wrong shape of work for this tool.
+one-line question - the wrong shape of work for this tool.
 """
 
 import re
@@ -12,7 +12,7 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel, ValidationError, field_validator
 
-# Per-field character limits — prevent prompt stuffing / token waste.
+# Per-field character limits - prevent prompt stuffing / token waste.
 FIELD_CHAR_LIMIT = 8000
 
 REQUIRED_FIELDS = (
@@ -95,7 +95,7 @@ class Artifact(BaseModel):
                 break
         if len(self.artifact.split()) < 12:
             warnings.append(
-                "The 'artifact' field is very short — this tool expects a real proposal, "
+                "The 'artifact' field is very short - this tool expects a real proposal, "
                 "PRD, or design to review, not a one-line question."
             )
         return warnings

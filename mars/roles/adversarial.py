@@ -11,7 +11,7 @@ def _history_block(prior: list[tuple[ChallengerOutput, RebuttalOutput]]) -> str:
     if not prior:
         return ""
     lines = [
-        "\n\nPRIOR EXCHANGE (your earlier challenges and the primary's responses — "
+        "\n\nPRIOR EXCHANGE (your earlier challenges and the primary's responses - "
         "concede what was genuinely resolved, do not re-litigate it):"
     ]
     for round_idx, (challenge, rebuttal) in enumerate(prior, start=1):

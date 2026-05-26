@@ -3,7 +3,7 @@
 Enforces the PRD's config rules in code (not just schema):
 - at least 2 providers configured
 - every role maps to a configured provider
-- primary != adversarial provider (hard error — cross-model pressure is the premise)
+- primary != adversarial provider (hard error - cross-model pressure is the premise)
 - rounds 1..MAX_ROUNDS, with MAX_ROUNDS a hard cap that config cannot exceed
 """
 

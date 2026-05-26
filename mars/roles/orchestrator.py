@@ -17,9 +17,9 @@ def run_orchestrator(
     transcript = []
     for round_idx, (challenge, rebuttal) in enumerate(rounds, start=1):
         transcript.append(
-            f"=== ROUND {round_idx} — CHALLENGE ===\n"
+            f"=== ROUND {round_idx} - CHALLENGE ===\n"
             + challenge.model_dump_json(indent=2)
-            + f"\n\n=== ROUND {round_idx} — REBUTTAL ===\n"
+            + f"\n\n=== ROUND {round_idx} - REBUTTAL ===\n"
             + rebuttal.model_dump_json(indent=2)
         )
     user = (

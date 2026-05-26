@@ -61,3 +61,4 @@ Supported in `config.example.yaml` but never exercised under the new refinement 
 
 ### 7. (meta) PRD is stale
 `/Users/aditya/Documents/obsidian/cortex/AI-OS/adversarial-review-system-prd.md` still describes the pre-pivot adversarial-*review* product (dispositions, PROCEED/DISCARD, repetition detection — all deliberately removed). Update or supersede it to reflect the refinement system. Until then it is NOT the source of truth — this SKILL.md + the backlog memory are.
+  - **RESOLVED 2026-05-26** — PRD rewritten to reflect the refinement system; it is now current. User directive going forward: **no feature creep** — the backlog is the full agreed scope.
