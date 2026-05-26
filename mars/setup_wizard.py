@@ -13,17 +13,10 @@ from rich.table import Table
 
 from mars.config import MAX_ROUNDS
 from mars.keys import KEYCHAIN_ACCOUNT, PROVIDER_ENV, keychain_get
+from mars.registry import FRONTIER_MODELS, SUPPORTED_PROVIDERS, VALIDATION_MODELS
 
 console = Console()
 
-SUPPORTED_PROVIDERS = ["anthropic", "openai", "gemini"]
-
-# (model_id, display label)
-FRONTIER_MODELS = {
-    "anthropic": ("claude-opus-4-7",                 "Claude Opus 4.7          — frontier, strongest reasoning"),
-    "openai":    ("gpt-5.5",                          "GPT-5.5                  — OpenAI frontier"),
-    "gemini":    ("gemini/gemini-3.1-pro-preview",    "Gemini 3.1 Pro Preview   — Google frontier"),
-}
 FIELD_HINTS = {
     "goal":        "the decision being made",
     "artifact":    "your proposal, PRD, or plan",
@@ -276,20 +269,12 @@ def _step2() -> Path:
     return out_path
 
 
-# Cheapest model per provider for key validation — 1-token ping, near-zero cost
-_VALIDATION_MODELS = {
-    "anthropic": "anthropic/claude-haiku-4-5-20251001",
-    "openai":    "openai/gpt-4o-mini",
-    "gemini":    "gemini/gemini-2.0-flash-lite",
-}
-
-
 def _validate_key(provider: str) -> tuple[bool, str]:
     """Make a 1-token completion to confirm key is valid and has credits.
     Returns (ok, message).
     """
     import litellm
-    model = _VALIDATION_MODELS.get(provider, f"{provider}/default")
+    model = VALIDATION_MODELS.get(provider, f"{provider}/default")
     try:
         litellm.completion(
             model=model,

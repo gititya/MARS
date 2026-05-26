@@ -15,6 +15,9 @@
 # Put the two STRONGEST models on primary and adversarial — they are peers debating, so a
 # mismatch (a weak model vs a frontier one) collapses the refinement. The orchestrator
 # writes your deliverable, so keep it strong too; do not cheap out there.
+#
+# Model IDs here are generated from mars/registry.py — edit them there, then regenerate
+# with `python -m mars.registry`.
 
 providers:
   anthropic:
