@@ -16,6 +16,10 @@ config.yaml
 voice-support
 *.artifact.yaml
 
+# Internal working / context docs (kept local, not for the public repo)
+SKILL.md
+CLAUDE.md
+
 # Python
 __pycache__/
 *.py[cod]
