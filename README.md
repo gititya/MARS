@@ -6,15 +6,37 @@ One model gives you a plausible answer too fast. It sounds coherent and confiden
 
 MARS fixes that. It takes a vague idea and hardens it with two frontier models working as peers. One builds the idea out, a second model from a different provider pressure-tests it, the first defends or revises, and they iterate. A third model then synthesizes the result into the version you should actually build. The challenge is genuine (the peer is from a different provider, so you avoid correlated blind spots), but it points at construction, not judgment: every weakness comes with a fix, and every fix feeds a stronger idea. You get back a tighter version of your idea, not a verdict.
 
-Use it for product direction, architecture calls, AI and workflow strategy, and turning a half-formed idea into something buildable. Do not use it for bug fixes, routine implementation, or simple questions.
+Use it for:
+
+- Product direction
+- Architecture calls
+- AI and workflow strategy
+- Turning a half-formed idea into something buildable
+
+Not for bug fixes, routine implementation, or simple questions.
+
+## Install
+
+From source (MARS is not on PyPI or npm). Python 3.11+, runs on macOS, Linux, or Windows.
 
 ```bash
-pip install -e .             # Python 3.11+
+git clone https://github.com/gititya/MARS.git
+cd MARS
+pip install -e .
 cp config.example.yaml config.yaml
-mars run --artifact examples/prd-example.yaml --config config.yaml --dry-run
 ```
 
-New to it? Run `mars setup` for an interactive wizard that checks your keys, assigns roles, builds an artifact, and runs the first refinement.
+Then add your API keys (see [API keys](#api-keys)) and run. The fastest start is the wizard:
+
+```bash
+mars setup
+```
+
+It checks your keys, assigns roles, builds an artifact, and runs the first refinement. Or go straight to a dry run on a bundled example:
+
+```bash
+mars run --artifact examples/prd-example.yaml --config config.yaml --dry-run
+```
 
 ---
 
@@ -170,7 +192,14 @@ Then confirm MARS can see them. Values are never printed, only whether each key 
 mars keys status --config config.yaml
 ```
 
-A Keychain entry under account `mars` wins over a shell variable of the same name, so a dedicated MARS key takes precedence over a stale or shared global one. With no Keychain entry, MARS falls back to the shell environment, which is what CI and non-macOS machines use.
+A Keychain entry under account `mars` wins over a shell variable of the same name, so a dedicated MARS key takes precedence over a stale or shared global one. With no Keychain entry, MARS falls back to the shell environment.
+
+The Keychain is the macOS convenience. On Linux, Windows, or CI there is no Keychain, so set the same variable names as environment variables instead and MARS reads them at startup:
+
+```bash
+export ANTHROPIC_API_KEY=...
+export OPENAI_API_KEY=...
+```
 
 To rotate or remove a key:
 
