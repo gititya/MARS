@@ -9,6 +9,7 @@ from typing import Any
 from pydantic import BaseModel
 
 SESSIONS_DIR = Path.home() / ".mars" / "sessions"
+OUTPUT_DIR = Path.home() / "Documents" / "Projects" / "MARS- output"
 
 
 class RoundRecord(BaseModel):
@@ -34,8 +35,11 @@ class SessionRecord(BaseModel):
 
     def save(self) -> Path:
         SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+        data = json.dumps(self.model_dump(), indent=2)
         path = SESSIONS_DIR / f"{self.session_id}.json"
-        path.write_text(json.dumps(self.model_dump(), indent=2))
+        path.write_text(data)
+        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        (OUTPUT_DIR / f"{self.session_id}.json").write_text(data)
         return path
 
 
