@@ -64,7 +64,10 @@ mars session list                                        # list past sessions
 mars session show <session-id>                           # re-render a past session
 ```
 
-Sessions are written as readable JSON to `~/.mars/sessions/`.
+Sessions are stored as JSON in `~/.mars/sessions/` (used by `mars session list` and `mars session show`).
+After each run a human-readable Markdown file is also written to `~/Documents/Projects/MARS- output/`,
+named `<date>-<goal-slug>.md`. That file contains the full record: your input, the primary build,
+every adversarial challenge and rebuttal, and the final hardened idea.
 
 ---
 
