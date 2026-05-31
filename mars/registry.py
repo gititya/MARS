@@ -18,7 +18,7 @@ SUPPORTED_PROVIDERS = ["anthropic", "openai", "gemini"]
 
 # provider -> (model_id, display label shown in the wizard's role menus)
 FRONTIER_MODELS = {
-    "anthropic": ("claude-opus-4-7",                 "Claude Opus 4.7          - frontier, strongest reasoning"),
+    "anthropic": ("claude-opus-4-8",                 "Claude Opus 4.8          - frontier, strongest reasoning"),
     "openai":    ("gpt-5.5",                          "GPT-5.5                  - OpenAI frontier"),
     "gemini":    ("gemini/gemini-3.1-pro-preview",    "Gemini 3.1 Pro Preview   - Google frontier"),
 }
