@@ -31,12 +31,24 @@ class Challenge(BaseModel):
     concern: str       # the genuine weakness, stated honestly
     why_it_matters: str
     suggestion: str    # constructive: how to strengthen or resolve it
+    reopens: list[str] = []  # prior challenge id(s) this concern continues/deepens; [] if genuinely new
+
+
+class ConcessionStatus(str, Enum):
+    resolved = "resolved"  # verified to survive the operator's real constraints
+    partial = "partial"    # real progress, but something specific is still open
+
+
+class Concession(BaseModel):
+    challenge_id: str
+    status: ConcessionStatus
+    justification: str  # the specific mechanism checked, not "now addressed"
 
 
 class ChallengerOutput(BaseModel):
     """The peer challenger's pass at the current proposal."""
     challenges: list[Challenge]
-    conceded: list[str]  # prior-round points now accepted as resolved (empty round 1)
+    concessions: list[Concession] = []  # prior-round points graded resolved/partial (empty round 1)
     biggest_risk: str    # the single most important thing to get right
 
 

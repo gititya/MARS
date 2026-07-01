@@ -12,7 +12,7 @@ from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
 from mars.config import MAX_ROUNDS
-from mars.keys import KEYCHAIN_ACCOUNT, PROVIDER_ENV, keychain_get
+from mars.keys import KEYCHAIN_ACCOUNT, PROVIDER_ENV, keychain_get, keychain_service_for, keychain_service_for_env
 from mars.registry import FRONTIER_MODELS, SUPPORTED_PROVIDERS, VALIDATION_MODELS
 
 console = Console()
@@ -41,13 +41,14 @@ def _panel(step: int, title: str, body: str) -> Panel:
 
 
 def _keychain_store(env_name: str, value: str) -> bool:
+    service = keychain_service_for_env(env_name)
     # Delete first (ignore failure if not found), then add fresh - more reliable than -U
     subprocess.run(
-        ["security", "delete-generic-password", "-a", KEYCHAIN_ACCOUNT, "-s", env_name],
+        ["security", "delete-generic-password", "-a", KEYCHAIN_ACCOUNT, "-s", service],
         capture_output=True,
     )
     result = subprocess.run(
-        ["security", "add-generic-password", "-a", KEYCHAIN_ACCOUNT, "-s", env_name, "-w", value],
+        ["security", "add-generic-password", "-a", KEYCHAIN_ACCOUNT, "-s", service, "-w", value],
         capture_output=True,
     )
     return result.returncode == 0
@@ -148,7 +149,7 @@ def _step1() -> tuple[dict, dict, dict]:
     key_status: dict[str, str] = {}
     for p in SUPPORTED_PROVIDERS:
         env_name = PROVIDER_ENV.get(p, p.upper() + "_API_KEY")
-        val = keychain_get(env_name)
+        val = keychain_get(keychain_service_for(p))
         if val:
             key_status[p] = "keychain"
         elif os.environ.get(env_name):

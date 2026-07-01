@@ -63,7 +63,7 @@ def run_review(
         accepted = sum(1 for x in rebuttal.responses if x.stance.value in ("accept", "revise"))
         session.add_log(
             f"Round {r}: {len(challenge.challenges)} challenge(s), "
-            f"{len(challenge.conceded)} conceded, {accepted} folded into the idea."
+            f"{len(challenge.concessions)} conceded, {accepted} folded into the idea."
         )
 
     progress("Orchestrator synthesizing the hardened idea...")

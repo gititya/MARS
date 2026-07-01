@@ -3,12 +3,19 @@
 import typer
 from rich.console import Console
 
+from mars.analysis import analyze_all, analyze_session
 from mars.artifact import ArtifactError, load_artifact
 from mars.config import ConfigError, load_config
-from mars.keys import PROVIDER_ENV, add_command, load_keys
+from mars.keys import PROVIDER_ENV, add_command, keychain_service_for, load_keys
 from mars.loop import run_review
 from mars.models import estimate_cost
-from mars.output import render_session, render_session_list
+from mars.output import (
+    render_analysis,
+    render_analysis_aggregate,
+    render_debate_health_summary,
+    render_session,
+    render_session_list,
+)
 from mars.roles.adversarial import SYSTEM as ADVERSARIAL_SYSTEM
 from mars.roles.orchestrator import SYSTEM as ORCHESTRATOR_SYSTEM
 from mars.roles.primary import REBUTTAL_SYSTEM, SYSTEM as PRIMARY_SYSTEM
@@ -145,6 +152,7 @@ def run(
         _fail(str(e))
 
     render_session(session)
+    render_debate_health_summary(analyze_session(session))
 
 
 @session_app.command("show")
@@ -161,6 +169,21 @@ def session_show(session_id: str = typer.Argument(..., help="Session ID to displ
 def session_list():
     """List past sessions."""
     render_session_list(list_sessions())
+
+
+@session_app.command("analyze")
+def session_analyze(
+    session_id: str = typer.Argument(None, help="Session ID to analyze. Omit to analyze every saved session."),
+):
+    """Print stance distribution, concession health, and reopened-concern counts."""
+    if session_id:
+        try:
+            session = load_session(session_id)
+        except FileNotFoundError as e:
+            _fail(str(e))
+        render_analysis(analyze_session(session))
+    else:
+        render_analysis_aggregate(analyze_all(list_sessions()))
 
 
 @keys_app.command("status")
@@ -184,8 +207,7 @@ def keys_status(config: str = typer.Option("config.yaml", "--config", help="Path
         "missing": "[red]missing[/red]",
     }
     for provider, src in status.items():
-        env_name = PROVIDER_ENV.get(provider, provider.upper() + "_API_KEY")
-        table.add_row(provider, env_name, label.get(src, src))
+        table.add_row(provider, keychain_service_for(provider), label.get(src, src))
     console.print(table)
 
     missing = [p for p, src in status.items() if src == "missing"]

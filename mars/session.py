@@ -24,6 +24,21 @@ def _bullets(items: list[str]) -> str:
     return "\n".join(f"- {i}" for i in items) if items else "_none_"
 
 
+def _concession_lines(challenge: dict) -> list[str]:
+    """Render concessions (new structured format) or fall back to the legacy
+    flat `conceded` prose list from sessions saved before that field existed."""
+    concessions = challenge.get("concessions")
+    if concessions:
+        return [
+            f"- **{c.get('status', '')}** {c.get('challenge_id', '')}: {c.get('justification', '')}"
+            for c in concessions
+        ]
+    conceded = challenge.get("conceded")
+    if conceded:
+        return [f"- {c}" for c in conceded]
+    return []
+
+
 class RoundRecord(BaseModel):
     index: int
     challenge: dict[str, Any]
@@ -140,8 +155,9 @@ class SessionRecord(BaseModel):
             lines += [""]
             if ch.get("biggest_risk"):
                 lines += [f"**Biggest risk:** {ch['biggest_risk']}", ""]
-            if ch.get("conceded"):
-                lines += [f"**Conceded from prior round**\n\n{_bullets(ch['conceded'])}", ""]
+            concession_lines = _concession_lines(ch)
+            if concession_lines:
+                lines += [f"**Conceded from prior round**\n\n" + "\n".join(concession_lines), ""]
             lines += [""]
 
             lines += [f"## Round {rnd.index} — Primary Rebuttal", ""]

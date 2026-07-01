@@ -46,8 +46,9 @@ mars run --artifact examples/prd-example.yaml --config config.yaml --dry-run
 2. **You dry run first.** `--dry-run` validates the config and artifact, prints a cost estimate, and pings each provider with a single token to confirm the key works. It never runs the refinement, so the cost is negligible and nothing real reaches a provider until you confirm.
 3. **The primary builds the idea.** It restates the idea more sharply than it arrived, commits to concrete choices, and names its assumptions and soft spots. It builds instead of hedging, so there is something real to push on.
 4. **The challenger pressure-tests it.** A frontier peer from a different provider finds where the idea is genuinely weak and pairs every concern with a fix. It does not block or nitpick.
-5. **The primary defends or revises.** For each challenge it takes a stance (accept, revise, or defend) and restates an improved proposal. That version carries into the next round, where the challenger can concede what is now resolved.
+5. **The primary defends or revises.** For each challenge it takes a stance (accept, revise, or defend) and restates an improved proposal. That version carries into the next round, where the challenger grades each prior concern resolved or partial, never for free: a fix only earns "resolved" if it survives your stated constraints, and a concern that resurfaces gets linked back to the one it re-litigates instead of hiding under a fresh id.
 6. **The orchestrator delivers the hardened idea.** After the rounds it synthesizes the result: the tightened idea, what got stronger, the decisions that still need your judgment, and the risks to watch. No winner, no verdict.
+7. **MARS checks its own debate for you.** After every run it prints a debate-health summary: the accept/revise/defend mix and any reopened concerns. If the primary never pushed back, you're told — the idea may genuinely be strong, or the debate may have collapsed into one-sided agreement. Run `mars session analyze` on any past session to see this on demand.
 
 ---
 
@@ -62,6 +63,8 @@ mars run --artifact artifact.yaml --yes                  # skip the cost confirm
 mars keys status --config config.yaml                    # check which provider keys are found
 mars session list                                        # list past sessions
 mars session show <session-id>                           # re-render a past session
+mars session analyze <session-id>                        # debate-health: stance mix, reopened concerns
+mars session analyze                                     # same, aggregated across every saved session
 ```
 
 Sessions are stored as JSON in `~/.mars/sessions/` (used by `mars session list` and `mars session show`).
@@ -134,6 +137,7 @@ A run does not end with a verdict. It ends with the hardened idea:
 | **What got stronger** | The concrete improvements the refinement produced |
 | **Open decisions** | The calls that genuinely need your judgment: real tradeoffs the models could not settle for you |
 | **Watch items** | Residual risks worth tracking while you build |
+| **Debate health** | Accept/revise/defend mix and any reopened concerns, so you can tell whether the challenge was genuine or one-sided |
 
 ### Sample output
 
@@ -182,11 +186,11 @@ Completed all 1 planned round(s) of refinement.
 
 ## API keys
 
-MARS needs one key per provider you assign a role to. Store each one in the macOS Keychain under the account `mars`, with the service name set to the provider's environment variable. The `-w` flag prompts for the value with hidden input, so the key never lands in your shell history:
+MARS needs one key per provider you assign a role to. Store each one in the macOS Keychain under account `aditya`, with the scoped service name for MARS. The `-w` flag prompts for the value with hidden input, so the key never lands in your shell history:
 
 ```bash
-security add-generic-password -a mars -s ANTHROPIC_API_KEY -w
-security add-generic-password -a mars -s OPENAI_API_KEY -w
+security add-generic-password -a aditya -s Anthropic:mars -w
+security add-generic-password -a aditya -s OpenAI:mars -w
 ```
 
 Then confirm MARS can see them. Values are never printed, only whether each key was found:
@@ -195,7 +199,7 @@ Then confirm MARS can see them. Values are never printed, only whether each key 
 mars keys status --config config.yaml
 ```
 
-A Keychain entry under account `mars` wins over a shell variable of the same name, so a dedicated MARS key takes precedence over a stale or shared global one. With no Keychain entry, MARS falls back to the shell environment.
+A scoped Keychain entry under account `aditya` wins over a shell variable, so a dedicated MARS key takes precedence over a stale or shared global one. With no Keychain entry, MARS falls back to the shell environment.
 
 The Keychain is the macOS convenience. On Linux, Windows, or CI there is no Keychain, so set the same variable names as environment variables instead and MARS reads them at startup:
 
@@ -208,11 +212,11 @@ To rotate or remove a key:
 
 ```bash
 # rotate (delete, then re-add with a hidden prompt)
-security delete-generic-password -a mars -s OPENAI_API_KEY
-security add-generic-password -a mars -s OPENAI_API_KEY -w
+security delete-generic-password -a aditya -s OpenAI:mars
+security add-generic-password -a aditya -s OpenAI:mars -w
 
 # remove
-security delete-generic-password -a mars -s OPENAI_API_KEY
+security delete-generic-password -a aditya -s OpenAI:mars
 ```
 
 `mars setup` does this for you, prompting for any key it cannot find.
@@ -221,7 +225,7 @@ security delete-generic-password -a mars -s OPENAI_API_KEY
 
 ## Security
 
-- No keys in code. Keys come from the macOS Keychain (account `mars`) or environment variables, read at startup.
+- No keys in code. Keys come from scoped macOS Keychain services under account `aditya` or environment variables, read at startup.
 - `.env`, session logs, and credential files are gitignored. Only `.env.example` is tracked.
 - Session logs are written locally to `~/.mars/sessions/` and never sent anywhere.
 - A CI check scans the source for hardcoded secret patterns on every push and pull request.

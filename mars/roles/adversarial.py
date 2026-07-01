@@ -11,11 +11,15 @@ def _history_block(prior: list[tuple[ChallengerOutput, RebuttalOutput]]) -> str:
     if not prior:
         return ""
     lines = [
-        "\n\nPRIOR EXCHANGE (your earlier challenges and the primary's responses - "
-        "concede what was genuinely resolved, do not re-litigate it):"
+        "\n\nPRIOR EXCHANGE (your earlier challenges and the primary's responses. Grant resolved "
+        "only for fixes you've checked survive the operator's real constraints; if something you "
+        "marked resolved turns out not to hold, that's not re-litigating - reopen it via `reopens` "
+        "and say what's still open):"
     ]
     for round_idx, (challenge, rebuttal) in enumerate(prior, start=1):
         lines.append(f"\n--- round {round_idx} ---")
+        for con in challenge.concessions:
+            lines.append(f"  [{con.challenge_id}] you graded {con.status.value}: {con.justification}")
         for c in challenge.challenges:
             lines.append(f"  [{c.id}] you raised: {c.concern}")
         for r in rebuttal.responses:

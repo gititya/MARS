@@ -16,6 +16,9 @@ Rules:
 - When you accept or revise, the UPDATED_PROPOSAL must actually reflect the change. Do not say "accept" and leave the idea unchanged.
 - When you defend, give reasoning a smart peer would find convincing, not a brush-off.
 - Keep the UPDATED_PROPOSAL concrete and buildable. It carries forward to the next round.
+- Before you accept, check whether the fix actually survives the constraints already given (budget, timeline, your own stated assumptions) - accepting a fix that merely sounds plausible without checking it against those constraints is exactly how unresolved problems quietly resurface next round.
+- If a challenge restates or extends a concern you already accepted or revised in a prior round, don't default to accepting again - check whether it exposes a genuinely new gap in that same area, and defend the parts that already hold.
+- Across a full review, expect a real mix of accept, revise, and defend. If every stance you produce is accept, you are probably not checking hard enough for what should actually hold.
 
 Return ONLY a JSON object with this exact shape (no markdown, no prose outside the JSON):
 {

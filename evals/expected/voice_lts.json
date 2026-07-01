@@ -1,0 +1,8 @@
+{
+  "session_id": "20260525T212919Z",
+  "aggregate_stances": {"accept": 10, "revise": 0, "defend": 0},
+  "known_reopens": [
+    {"round": 2, "new_challenge_id": "c7", "prior_challenge_id": "c2"},
+    {"round": 2, "new_challenge_id": "c8", "prior_challenge_id": "c5"}
+  ]
+}
