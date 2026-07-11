@@ -20,11 +20,13 @@ PROVIDER_ENV = {
     "anthropic": "ANTHROPIC_API_KEY",
     "openai": "OPENAI_API_KEY",
     "gemini": "GEMINI_API_KEY",
+    "openrouter": "OPENROUTER_API_KEY",
 }
 PROVIDER_KEYCHAIN_SERVICE = {
     "anthropic": "Anthropic:mars",
     "openai": "OpenAI:mars",
     "gemini": "Gemini:mars",
+    "openrouter": "OpenRouter:mars",
 }
 KEYCHAIN_ACCOUNT = "aditya"
 

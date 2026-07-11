@@ -11,9 +11,9 @@ from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
-from mars.config import MAX_ROUNDS
+from mars.config import MAX_ROUNDS, model_family
 from mars.keys import KEYCHAIN_ACCOUNT, PROVIDER_ENV, keychain_get, keychain_service_for, keychain_service_for_env
-from mars.registry import FRONTIER_MODELS, SUPPORTED_PROVIDERS, VALIDATION_MODELS
+from mars.registry import BALANCED_MODELS, FRONTIER_MODELS, SUPPORTED_PROVIDERS, VALIDATION_MODELS
 
 console = Console()
 
@@ -183,21 +183,48 @@ def _step1() -> tuple[dict, dict, dict]:
         console.print("\n[red]Need keys for at least 2 providers. Add them and re-run setup.[/red]")
         raise SystemExit(1)
 
+    # Tier - both debaters should come from the same tier, or the weaker one just concedes.
+    console.print("[bold cyan1]Model tier[/bold cyan1]")
+    tier_label = _pick(
+        "Which tier? (both debaters run at this tier)",
+        ["Frontier - max quality (e.g. GPT-5.6 Sol vs Claude Fable 5)",
+         "Balanced - lower cost (e.g. GPT-5.6 Terra vs Claude Opus 4.8)"],
+    )
+    model_tier = dict(FRONTIER_MODELS if tier_label.startswith("Frontier") else BALANCED_MODELS)
+
+    # OpenRouter is a gateway - let the user pick which underlying model it routes to.
+    if "openrouter" in available:
+        console.print("\n[bold cyan1]OpenRouter model[/bold cyan1]")
+        console.print(
+            "[dim]OpenRouter reaches any vendor with one key. Enter a '<vendor>/<model>' slug\n"
+            "(e.g. openai/gpt-5.6-sol or anthropic/claude-fable-5). MARS adds the openrouter/ prefix.[/dim]"
+        )
+        slug = Prompt.ask("  OpenRouter model slug", default=model_tier["openrouter"][0]).strip()
+        model_tier["openrouter"] = (slug, f"OpenRouter -> {slug}")
+
     # Role assignment
-    console.print("[bold cyan1]Assign roles[/bold cyan1]")
+    console.print("\n[bold cyan1]Assign roles[/bold cyan1]")
 
     primary, primary_model = _pick_role(
-        "Primary (builder) - put a frontier model here; it builds and revises the idea",
-        available, FRONTIER_MODELS,
+        "Primary (builder) - put a strong model here; it builds and revises the idea",
+        available, model_tier,
     )
-    adv_opts = [p for p in available if p != primary]
+    # The challenger must be a DIFFERENT model family (checked in config too), so a
+    # same-family peer routed through OpenRouter can't slip past the guard.
+    adv_opts = [p for p in available if model_family(model_tier[p][0]) != model_family(primary_model)]
+    if not adv_opts:
+        console.print(
+            "\n[red]No different-family challenger available - every other configured provider "
+            "resolves to the same family as the primary. Configure a second model family.[/red]"
+        )
+        raise SystemExit(1)
     adversarial, adversarial_model = _pick_role(
-        "Challenger (peer) - must differ from primary; use your other frontier model",
-        adv_opts, FRONTIER_MODELS,
+        "Challenger (peer) - must be a different family; use your other frontier model",
+        adv_opts, model_tier,
     )
     orchestrator, orchestrator_model = _pick_role(
         "Orchestrator - synthesizes the hardened idea (your deliverable); keep it strong",
-        available, FRONTIER_MODELS,
+        available, model_tier,
     )
 
     # Rounds
@@ -212,7 +239,7 @@ def _step1() -> tuple[dict, dict, dict]:
     rounds_int = int(raw)
 
     role_models = {primary: primary_model, adversarial: adversarial_model, orchestrator: orchestrator_model}
-    providers_cfg = {p: {"model": role_models.get(p, FRONTIER_MODELS[p][0])} for p in available}
+    providers_cfg = {p: {"model": role_models.get(p, model_tier[p][0])} for p in available}
     roles_cfg = {"primary": primary, "adversarial": adversarial, "orchestrator": orchestrator}
     rounds_cfg = {"default": rounds_int, "max": MAX_ROUNDS}
     return providers_cfg, roles_cfg, rounds_cfg

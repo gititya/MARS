@@ -7,29 +7,37 @@
 # RULES (enforced in code):
 #   - At least 2 providers must be configured.
 #   - Every role must map to a configured provider.
-#   - primary and adversarial MUST be different providers - the two debaters need to be
-#     genuine peers from different families, or you get correlated blind spots.
+#   - primary and adversarial MUST resolve to different model FAMILIES - the two debaters
+#     need to be genuine peers from different families, or you get correlated blind spots.
+#     This is checked by underlying family, so it holds even when one or both are routed
+#     through OpenRouter (e.g. an openrouter/anthropic/* slug counts as the anthropic family).
 #   - orchestrator may share a provider with primary.
 #   - rounds: 1 to 4. The max of 4 is a hard cap in code; config cannot exceed it.
 #
-# Put the two STRONGEST models on primary and adversarial - they are peers debating, so a
-# mismatch (a weak model vs a frontier one) collapses the refinement. The orchestrator
-# writes your deliverable, so keep it strong too; do not cheap out there.
+# Put two peers of the SAME tier on primary and adversarial - a mismatch (a balanced model
+# vs a frontier one) collapses the refinement because the weaker one just concedes. The
+# orchestrator writes your deliverable, so keep it strong too; do not cheap out there.
+#
+# openrouter is optional: one key reaches every vendor. Its model is a "<vendor>/<model>"
+# slug WITHOUT the "openrouter/" prefix (MARS adds it). Direct provider keys are the default
+# path - lower latency, accurate cost estimates, no middleman.
 #
 # Model IDs here are generated from mars/registry.py - edit them there, then regenerate
 # with `python -m mars.registry`.
 
 providers:
   anthropic:
-    model: claude-opus-4-8              # frontier flagship
+    model: claude-fable-5              # frontier flagship
   openai:
-    model: gpt-5.5                      # frontier flagship
+    model: gpt-5.6-sol                   # frontier flagship
   gemini:
-    model: gemini/gemini-3.1-pro-preview  # frontier flagship (optional third)
+    model: gemini/gemini-3.1-pro-preview  # frontier flagship (optional)
+  # openrouter:                          # optional gateway - one key for any vendor
+  #   model: openai/gpt-5.6-sol                # "<vendor>/<model>" slug; MARS adds the openrouter/ prefix
 
 roles:
   primary: openai                 # builds the idea, then defends/revises each round
-  adversarial: anthropic          # peer challenger - must be a frontier model, this is load-bearing
+  adversarial: anthropic          # peer challenger - must be a different family, this is load-bearing
   orchestrator: openai            # synthesizes the hardened idea (your deliverable); keep it strong
 
 rounds:

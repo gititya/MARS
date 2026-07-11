@@ -1,7 +1,8 @@
 """Single source of truth for model IDs across MARS.
 
 When a new frontier model launches, update the IDs in THIS file only:
-  - FRONTIER_MODELS    - the debaters/orchestrator defaults the wizard offers
+  - FRONTIER_MODELS    - the max-quality debaters/orchestrator defaults the wizard offers
+  - BALANCED_MODELS    - the lower-cost, still peer-grade tier (the wizard offers both tiers)
   - VALIDATION_MODELS  - the cheap models used for 1-token key-validation pings
 
 Everything else derives from here:
@@ -14,20 +15,38 @@ and is intentionally NOT regenerated here - it reflects the providers/roles you 
 
 from pathlib import Path
 
-SUPPORTED_PROVIDERS = ["anthropic", "openai", "gemini"]
+SUPPORTED_PROVIDERS = ["anthropic", "openai", "gemini", "openrouter"]
 
-# provider -> (model_id, display label shown in the wizard's role menus)
+# openrouter is a gateway, not a family: its model IDs are stored WITHOUT the
+# "openrouter/" prefix (as "<vendor>/<model>"), because models.model_string()
+# prepends "openrouter/" to route through litellm. The two debaters are matched
+# by underlying model FAMILY (see mars.config.model_family), so routing one or
+# both through OpenRouter still enforces the different-family rule.
+
+# provider -> (model_id, display label) for the FRONTIER (max-quality) tier.
 FRONTIER_MODELS = {
-    "anthropic": ("claude-opus-4-8",                 "Claude Opus 4.8          - frontier, strongest reasoning"),
-    "openai":    ("gpt-5.5",                          "GPT-5.5                  - OpenAI frontier"),
-    "gemini":    ("gemini/gemini-3.1-pro-preview",    "Gemini 3.1 Pro Preview   - Google frontier"),
+    "anthropic":  ("claude-fable-5",                   "Claude Fable 5           - Mythos-class frontier flagship"),
+    "openai":     ("gpt-5.6-sol",                       "GPT-5.6 Sol              - OpenAI frontier flagship"),
+    "gemini":     ("gemini/gemini-3.1-pro-preview",     "Gemini 3.1 Pro Preview   - Google frontier"),
+    "openrouter": ("openai/gpt-5.6-sol",                "OpenRouter               - any model via one key (edit the slug)"),
 }
 
-# provider -> cheapest model, used for the 1-token key-validation ping (near-zero cost)
+# provider -> (model_id, display label) for the BALANCED (lower-cost, still peer-grade) tier.
+# Pair like-for-like: run BOTH debaters from the same tier, or the weaker one just concedes.
+BALANCED_MODELS = {
+    "anthropic":  ("claude-opus-4-8",                  "Claude Opus 4.8          - balanced, one tier below Fable"),
+    "openai":     ("gpt-5.6-terra",                     "GPT-5.6 Terra            - balanced, ~half Sol's cost"),
+    "gemini":     ("gemini/gemini-3.1-flash-preview",   "Gemini 3.1 Flash         - balanced"),
+    "openrouter": ("openai/gpt-5.6-terra",              "OpenRouter               - any model via one key (edit the slug)"),
+}
+
+# provider -> cheapest model, used for the 1-token key-validation ping (near-zero cost).
+# Full litellm routing strings here (WITH prefix), unlike the FRONTIER/BALANCED slugs.
 VALIDATION_MODELS = {
-    "anthropic": "anthropic/claude-haiku-4-5-20251001",
-    "openai":    "openai/gpt-4o-mini",
-    "gemini":    "gemini/gemini-2.0-flash-lite",
+    "anthropic":  "anthropic/claude-haiku-4-5-20251001",
+    "openai":     "openai/gpt-4o-mini",
+    "gemini":     "gemini/gemini-2.0-flash-lite",
+    "openrouter": "openrouter/openai/gpt-4o-mini",
 }
 
 
@@ -39,6 +58,7 @@ def render_example_config() -> str:
     anthropic = FRONTIER_MODELS["anthropic"][0]
     openai = FRONTIER_MODELS["openai"][0]
     gemini = FRONTIER_MODELS["gemini"][0]
+    openrouter = FRONTIER_MODELS["openrouter"][0]
     return f"""\
 # MARS configuration.
 #
@@ -49,14 +69,20 @@ def render_example_config() -> str:
 # RULES (enforced in code):
 #   - At least 2 providers must be configured.
 #   - Every role must map to a configured provider.
-#   - primary and adversarial MUST be different providers - the two debaters need to be
-#     genuine peers from different families, or you get correlated blind spots.
+#   - primary and adversarial MUST resolve to different model FAMILIES - the two debaters
+#     need to be genuine peers from different families, or you get correlated blind spots.
+#     This is checked by underlying family, so it holds even when one or both are routed
+#     through OpenRouter (e.g. an openrouter/anthropic/* slug counts as the anthropic family).
 #   - orchestrator may share a provider with primary.
 #   - rounds: 1 to {MAX_ROUNDS}. The max of {MAX_ROUNDS} is a hard cap in code; config cannot exceed it.
 #
-# Put the two STRONGEST models on primary and adversarial - they are peers debating, so a
-# mismatch (a weak model vs a frontier one) collapses the refinement. The orchestrator
-# writes your deliverable, so keep it strong too; do not cheap out there.
+# Put two peers of the SAME tier on primary and adversarial - a mismatch (a balanced model
+# vs a frontier one) collapses the refinement because the weaker one just concedes. The
+# orchestrator writes your deliverable, so keep it strong too; do not cheap out there.
+#
+# openrouter is optional: one key reaches every vendor. Its model is a "<vendor>/<model>"
+# slug WITHOUT the "openrouter/" prefix (MARS adds it). Direct provider keys are the default
+# path - lower latency, accurate cost estimates, no middleman.
 #
 # Model IDs here are generated from mars/registry.py - edit them there, then regenerate
 # with `python -m mars.registry`.
@@ -65,13 +91,15 @@ providers:
   anthropic:
     model: {anthropic}              # frontier flagship
   openai:
-    model: {openai}                      # frontier flagship
+    model: {openai}                   # frontier flagship
   gemini:
-    model: {gemini}  # frontier flagship (optional third)
+    model: {gemini}  # frontier flagship (optional)
+  # openrouter:                          # optional gateway - one key for any vendor
+  #   model: {openrouter}                # "<vendor>/<model>" slug; MARS adds the openrouter/ prefix
 
 roles:
   primary: openai                 # builds the idea, then defends/revises each round
-  adversarial: anthropic          # peer challenger - must be a frontier model, this is load-bearing
+  adversarial: anthropic          # peer challenger - must be a different family, this is load-bearing
   orchestrator: openai            # synthesizes the hardened idea (your deliverable); keep it strong
 
 rounds:

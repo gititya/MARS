@@ -59,6 +59,7 @@ mars setup                                               # interactive wizard: k
 mars run --artifact artifact.yaml --config config.yaml   # run a refinement
 mars run --artifact artifact.yaml --dry-run              # validate and estimate cost, no API calls
 mars run --artifact artifact.yaml --rounds 3             # override rounds (1 to 4)
+mars run --artifact artifact.yaml --mode balanced        # swap models to the balanced tier for this run
 mars run --artifact artifact.yaml --yes                  # skip the cost confirmation prompt
 mars keys status --config config.yaml                    # check which provider keys are found
 mars session list                                        # list past sessions
@@ -81,9 +82,11 @@ Configure one model per provider, then map the three roles to them. See `config.
 ```yaml
 providers:
   anthropic:
-    model: claude-opus-4-7
+    model: claude-fable-5
   openai:
-    model: gpt-5.5
+    model: gpt-5.6-sol
+  # openrouter:                 # optional 4th provider: one key reaches any vendor
+  #   model: openai/gpt-5.6-sol # "<vendor>/<model>" slug; MARS adds the openrouter/ prefix
 roles:
   primary: openai
   adversarial: anthropic
@@ -93,7 +96,14 @@ rounds:
   max: 4
 ```
 
-Put your two strongest models on `primary` and `adversarial`. They debate as peers, so a mismatch (a weak model against a frontier one) collapses the refinement. Keep the orchestrator strong too; it writes your deliverable.
+Put two peers of the **same tier** on `primary` and `adversarial`. They debate as peers, so a mismatch (a balanced model against a frontier one) collapses the refinement — the weaker one just concedes. Keep the orchestrator strong too; it writes your deliverable.
+
+MARS ships two tiers, chosen in `mars setup` or per run with `--mode`:
+
+| Tier | OpenAI | Anthropic |
+|------|--------|-----------|
+| **frontier** (max quality) | GPT-5.6 Sol | Claude Fable 5 |
+| **balanced** (lower cost) | GPT-5.6 Terra | Claude Opus 4.8 |
 
 Rules enforced in code, not just in the schema:
 
@@ -101,11 +111,13 @@ Rules enforced in code, not just in the schema:
 |------|-----|
 | At least 2 providers configured | The whole point is more than one model |
 | Every role maps to a configured provider | No role can point at a provider you never set up |
-| `primary` and `adversarial` must be different providers | The two debaters must be peers from different families, or you get correlated blind spots |
+| `primary` and `adversarial` must be different model families | The two debaters must be peers from different families, or you get correlated blind spots. Checked by underlying family, so it holds even when one or both are routed through OpenRouter (an `openrouter/anthropic/*` slug counts as the anthropic family) |
 | `orchestrator` may share with `primary` | Saves a key; the orchestrator does not debate, it synthesizes |
 | Rounds capped at 4 | Hard limit in code, config cannot raise it |
 
-Model IDs live in one place, `mars/registry.py`. When a new frontier model ships, edit it there and run `python -m mars.registry` to regenerate `config.example.yaml`.
+**OpenRouter** is an optional 4th provider: one key reaches every vendor. Direct provider keys are the default path — lower latency, accurate cost estimates, no middleman. Its model is a `<vendor>/<model>` slug without the `openrouter/` prefix (MARS adds it).
+
+Model IDs live in one place, `mars/registry.py` (`FRONTIER_MODELS` + `BALANCED_MODELS`). When a new frontier model ships, edit it there and run `python -m mars.registry` to regenerate `config.example.yaml`.
 
 ---
 
@@ -191,6 +203,7 @@ MARS needs one key per provider you assign a role to. Store each one in the macO
 ```bash
 security add-generic-password -a aditya -s Anthropic:mars -w
 security add-generic-password -a aditya -s OpenAI:mars -w
+security add-generic-password -a aditya -s OpenRouter:mars -w   # optional 4th provider
 ```
 
 Then confirm MARS can see them. Values are never printed, only whether each key was found:
@@ -206,6 +219,7 @@ The Keychain is the macOS convenience. On Linux, Windows, or CI there is no Keyc
 ```bash
 export ANTHROPIC_API_KEY=...
 export OPENAI_API_KEY=...
+export OPENROUTER_API_KEY=...   # optional 4th provider
 ```
 
 To rotate or remove a key:

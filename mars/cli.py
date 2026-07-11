@@ -5,7 +5,7 @@ from rich.console import Console
 
 from mars.analysis import analyze_all, analyze_session
 from mars.artifact import ArtifactError, load_artifact
-from mars.config import ConfigError, load_config
+from mars.config import ConfigError, load_config, validate_config
 from mars.keys import PROVIDER_ENV, add_command, keychain_service_for, load_keys
 from mars.loop import run_review
 from mars.models import estimate_cost
@@ -73,6 +73,7 @@ def run(
     artifact: str = typer.Option(..., "--artifact", help="Path to the artifact YAML."),
     config: str = typer.Option("config.yaml", "--config", help="Path to the config YAML."),
     rounds: int = typer.Option(None, "--rounds", help="Override rounds (1-4)."),
+    mode: str = typer.Option(None, "--mode", help="Override model tier for this run: 'frontier' or 'balanced'. Swaps each direct provider's model to that tier; openrouter is left as configured."),
     dry_run: bool = typer.Option(False, "--dry-run", help="Validate + estimate cost only; no API calls."),
     yes: bool = typer.Option(False, "--yes", help="Skip the cost confirmation prompt."),
 ):
@@ -81,6 +82,29 @@ def run(
         cfg = load_config(config)
     except ConfigError as e:
         _fail(str(e))
+
+    if mode:
+        from mars.registry import BALANCED_MODELS, FRONTIER_MODELS
+        tier = {"frontier": FRONTIER_MODELS, "balanced": BALANCED_MODELS}.get(mode.lower())
+        if tier is None:
+            _fail(f"--mode must be 'frontier' or 'balanced'. Got {mode!r}.")
+        data = cfg.model_dump()
+        remapped = []
+        for p in data["providers"]:
+            # openrouter is a gateway - MARS can't infer a tier for an arbitrary slug, so leave it.
+            if p in tier and p != "openrouter":
+                old, new = data["providers"][p]["model"], tier[p][0]
+                if old != new:
+                    data["providers"][p]["model"] = new
+                    remapped.append(f"{p} {old}→{new}")
+        try:
+            cfg = validate_config(data)
+        except ConfigError as e:
+            _fail(f"--mode {mode} produced an invalid config: {e}")
+        if remapped:
+            console.print(f"[dim]--mode {mode}: {', '.join(remapped)}[/dim]")
+        if "openrouter" in data["providers"]:
+            console.print("[dim]--mode leaves openrouter as configured (a gateway slug has no inferable tier).[/dim]")
     try:
         art = load_artifact(artifact)
     except ArtifactError as e:
@@ -96,9 +120,9 @@ def run(
     est = _estimate(cfg, art, n_rounds)
     console.print(
         f"[bold]Plan:[/bold] {n_rounds} round(s) - "
-        f"primary=[cyan]{cfg.provider_for('primary')}[/cyan], "
-        f"adversarial=[cyan]{cfg.provider_for('adversarial')}[/cyan], "
-        f"orchestrator=[cyan]{cfg.provider_for('orchestrator')}[/cyan]"
+        f"primary=[cyan]{cfg.provider_for('primary')}/{cfg.model_for('primary')}[/cyan], "
+        f"adversarial=[cyan]{cfg.provider_for('adversarial')}/{cfg.model_for('adversarial')}[/cyan], "
+        f"orchestrator=[cyan]{cfg.provider_for('orchestrator')}/{cfg.model_for('orchestrator')}[/cyan]"
     )
     console.print(
         f"[bold]Estimated cost:[/bold] ≥ ${est:.4f} "
