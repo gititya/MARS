@@ -34,7 +34,7 @@ FRONTIER_MODELS = {
 # provider -> (model_id, display label) for the BALANCED (lower-cost, still peer-grade) tier.
 # Pair like-for-like: run BOTH debaters from the same tier, or the weaker one just concedes.
 BALANCED_MODELS = {
-    "anthropic":  ("claude-opus-4-8",                  "Claude Opus 4.8          - balanced, one tier below Fable"),
+    "anthropic":  ("claude-opus-5",                    "Claude Opus 5            - balanced, one tier below Fable"),
     "openai":     ("gpt-5.6-terra",                     "GPT-5.6 Terra            - balanced, ~half Sol's cost"),
     "gemini":     ("gemini/gemini-3.1-flash-preview",   "Gemini 3.1 Flash         - balanced"),
     "openrouter": ("openai/gpt-5.6-terra",              "OpenRouter               - any model via one key (edit the slug)"),
