@@ -82,11 +82,11 @@ Configure one model per provider, then map the three roles to them. See `config.
 ```yaml
 providers:
   anthropic:
-    model: claude-fable-5
+    model: claude-fable-5-1
   openai:
-    model: gpt-5.6-sol
+    model: gpt-6-astra
   # openrouter:                 # optional 4th provider: one key reaches any vendor
-  #   model: openai/gpt-5.6-sol # "<vendor>/<model>" slug; MARS adds the openrouter/ prefix
+  #   model: openai/gpt-6-astra # "<vendor>/<model>" slug; MARS adds the openrouter/ prefix
 roles:
   primary: openai
   adversarial: anthropic
@@ -100,10 +100,10 @@ Put two peers of the **same tier** on `primary` and `adversarial`. They debate a
 
 MARS ships two tiers, chosen in `mars setup` or per run with `--mode`:
 
-| Tier | OpenAI | Anthropic |
-|------|--------|-----------|
-| **frontier** (max quality) | GPT-5.6 Sol | Claude Fable 5 |
-| **balanced** (lower cost) | GPT-5.6 Terra | Claude Opus 4.8 |
+| Tier | OpenAI | Anthropic | Gemini |
+|------|--------|-----------|--------|
+| **frontier** (max quality) | GPT-6 Astra | Claude Fable 5.1 | Gemini 3.1 Pro |
+| **balanced** (lower cost) | GPT-5.6 Sol | Claude Opus 5 | Gemini 2.5 Pro |
 
 Rules enforced in code, not just in the schema:
 

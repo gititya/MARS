@@ -197,7 +197,7 @@ def _step1() -> tuple[dict, dict, dict]:
         console.print("\n[bold cyan1]OpenRouter model[/bold cyan1]")
         console.print(
             "[dim]OpenRouter reaches any vendor with one key. Enter a '<vendor>/<model>' slug\n"
-            "(e.g. openai/gpt-5.6-sol or anthropic/claude-fable-5). MARS adds the openrouter/ prefix.[/dim]"
+            "(e.g. openai/gpt-6-astra or anthropic/claude-fable-5-1). MARS adds the openrouter/ prefix.[/dim]"
         )
         slug = Prompt.ask("  OpenRouter model slug", default=model_tier["openrouter"][0]).strip()
         model_tier["openrouter"] = (slug, f"OpenRouter -> {slug}")

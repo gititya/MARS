@@ -27,13 +27,13 @@
 
 providers:
   anthropic:
-    model: claude-fable-5              # frontier flagship
+    model: claude-fable-5-1              # frontier flagship
   openai:
-    model: gpt-5.6-sol                   # frontier flagship
+    model: gpt-6-astra                   # frontier flagship
   gemini:
     model: gemini/gemini-3.1-pro-preview  # frontier flagship (optional)
   # openrouter:                          # optional gateway - one key for any vendor
-  #   model: openai/gpt-5.6-sol                # "<vendor>/<model>" slug; MARS adds the openrouter/ prefix
+  #   model: openai/gpt-6-astra                # "<vendor>/<model>" slug; MARS adds the openrouter/ prefix
 
 roles:
   primary: openai                 # builds the idea, then defends/revises each round
