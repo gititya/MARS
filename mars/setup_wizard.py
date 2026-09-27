@@ -298,7 +298,8 @@ def _step2() -> Path:
 
 
 def _validate_key(provider: str) -> tuple[bool, str]:
-    """Make a 1-token completion to confirm key is valid and has credits.
+    """Make a tiny completion to confirm key is valid and has credits.
+    No token cap: reasoning models (GPT-6 family) reject max_tokens and can't finish in 1 token.
     Returns (ok, message).
     """
     import litellm
@@ -307,7 +308,6 @@ def _validate_key(provider: str) -> tuple[bool, str]:
         litellm.completion(
             model=model,
             messages=[{"role": "user", "content": "hi"}],
-            max_tokens=1,
         )
         return True, f"[green]✓ {provider}[/green] - key valid, credits available"
     except litellm.AuthenticationError as e:

@@ -103,7 +103,7 @@ MARS ships two tiers, chosen in `mars setup` or per run with `--mode`:
 | Tier | OpenAI | Anthropic | Gemini |
 |------|--------|-----------|--------|
 | **frontier** (max quality) | GPT-6 Astra | Claude Fable 5.1 | Gemini 3.1 Pro |
-| **balanced** (lower cost) | GPT-5.6 Sol | Claude Opus 5 | Gemini 2.5 Pro |
+| **balanced** (lower cost) | GPT-6 Sol | Claude Opus 5.5 | Gemini 2.5 Pro |
 
 Rules enforced in code, not just in the schema:
 

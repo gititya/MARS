@@ -19,7 +19,7 @@ def model_family(model: str) -> str:
     """Collapse a model ID to its underlying model family.
 
     Works for direct IDs ("claude-fable-5-1", "gpt-6-astra") and gateway slugs
-    ("openai/gpt-5.6-sol" via OpenRouter), so the primary/adversarial
+    ("openai/gpt-6-sol" via OpenRouter), so the primary/adversarial
     different-family rule holds even when a debater is routed through a gateway.
     Unknown IDs return themselves, so they never collide unless identical.
     """

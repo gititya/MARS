@@ -17,7 +17,7 @@ read_next:
 agent_notes:
   - "Product direction is refinement, not pass/fail review."
   - "Do not assume the CLI should become a web app — that was descoped."
-  - "Match debaters by tier (Astra↔Fable 5.1 or Sol↔Opus 5); crossing tiers collapses the debate."
+  - "Match debaters by tier (Astra↔Fable 5.1 or Sol↔Opus 5.5); crossing tiers collapses the debate."
 safe_first_action: "Read README.md and SKILL.md, then inspect the current CLI flow before changing product surface."
 updated_at: "2026-09-05"
 updated_by: "claude"
