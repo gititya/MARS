@@ -35,7 +35,7 @@ FRONTIER_MODELS = {
 
 # provider -> (model_id, display label) for the BALANCED (lower-cost, still peer-grade) tier.
 # Pair like-for-like: run BOTH debaters from the same tier, or the weaker one just concedes.
-# OpenAI and Anthropic use the rung just below their flagship: GPT-6 Sol sits under GPT-6 Astra,
+# OpenAI and Anthropic use the rung just below their flagship: GPT-6.1 Sol sits under GPT-6 Astra,
 # Claude Opus 5.5 under Fable 5.1. Gemini uses its demoted flagship (2.5 Pro, flagship until
 # 3.1 Pro). All three are peer-grade.
 #
@@ -45,9 +45,9 @@ FRONTIER_MODELS = {
 # FRONTIER_MODELS["gemini"] rather than shipping a dead model ID.
 BALANCED_MODELS = {
     "anthropic":  ("claude-opus-5-5",                  "Claude Opus 5.5          - balanced, one tier below Fable 5.1"),
-    "openai":     ("gpt-6-sol",                         "GPT-6 Sol                - balanced, one tier below GPT-6 Astra"),
+    "openai":     ("gpt-6.1-sol",                       "GPT-6.1 Sol              - balanced, one tier below GPT-6 Astra"),
     "gemini":     ("gemini/gemini-2.5-pro",             "Gemini 2.5 Pro           - balanced, demoted flagship (retires 2026-10-16 - revisit then)"),
-    "openrouter": ("openai/gpt-6-sol",                  "OpenRouter               - any model via one key (edit the slug)"),
+    "openrouter": ("openai/gpt-6.1-sol",                "OpenRouter               - any model via one key (edit the slug)"),
 }
 
 # provider -> cheapest model, used for the 1-token key-validation ping (near-zero cost).
@@ -55,7 +55,7 @@ BALANCED_MODELS = {
 # gpt-4o-mini lost API access 2026-02-16 and gemini-2.0-flash-lite shut down 2026-06-01 -
 # both replaced below with their current cheapest still-supported equivalents.
 VALIDATION_MODELS = {
-    "anthropic":  "anthropic/claude-haiku-4-5-20251001",
+    "anthropic":  "anthropic/claude-haiku-5-5",
     "openai":     "openai/gpt-6-luna",
     "gemini":     "gemini/gemini-3.1-flash-lite",
     "openrouter": "openrouter/openai/gpt-6-luna",
