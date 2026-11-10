@@ -16,7 +16,7 @@ dependencies = [
     "pydantic~=2.10",
     "rich>=13.9,<16.0",
     "pyyaml~=6.0",
-    "pypdf>=4,<7",
+    "pypdf>=4,<8",
     "prompt-toolkit~=3.0",
 ]
 
